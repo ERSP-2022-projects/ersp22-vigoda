@@ -1,0 +1,4 @@
+root: [name]
+edges:
+[name/id], [name/id]
+...
