@@ -7,4 +7,5 @@ generator.o: generator.h generator.cpp rng.h consts.h
 clean: 
 	rm -f *.o
 	rm -f *.out
-#	rm -f *.txt
+	rm -f results/*.txt
+	rm -f results/*.nex
