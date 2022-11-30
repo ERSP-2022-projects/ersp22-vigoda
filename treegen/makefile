@@ -1,5 +1,8 @@
+default: main
+
 main: main.cpp
 	g++ main.cpp -o main.out
+	mkdir -p results
 
 clean: 
 	rm -f *.o

@@ -5,11 +5,11 @@
 using namespace std;
 
 static inline uint64_t init(uint64_t seed) {
-    return (seed ^ 0x5deece66d) & ((1ULL << 48) - 1);
+    return (seed ^ 0x5deece66d) & (0xffffffffffff);
 }
 
 static inline int next(uint64_t *seed, const int bits) {
-    *seed = (*seed * 0x5deece66d + 0xb) & ((1ULL << 48) - 1);
+    *seed = (*seed * 0x5deece66d + 0xb) & (0xffffffffffff);
     return (int) ((int64_t)*seed >> (48 - bits));
 }
 
@@ -27,19 +27,8 @@ static inline int nextInt(uint64_t *seed, const int n) {
     return val;
 }
 
-static inline uint64_t nextLong(uint64_t *seed) {
-    return ((uint64_t) next(seed, 32) << 32) + next(seed, 32);
-}
-
 static inline float nextFloat(uint64_t *seed) {
     return next(seed, 24) / (float) (1 << 24);
-}
-
-static inline double nextDouble(uint64_t *seed) {
-    uint64_t x = (uint64_t)next(seed, 26);
-    x <<= 27;
-    x += next(seed, 27);
-    return (int64_t) x / (double) (1ULL << 53);
 }
 
 #endif

@@ -4,10 +4,7 @@
 #include "rng.h"
 using namespace std;
 
-static const int DEFAULT_NUM_SPECIES = 10;
-static const int DEFAULT_SEQUENCE_LENGTH = 1000;
-static const double DEFAULT_P_MUTATE = 0.2;
-static const string SPECIES_NAMES[DEFAULT_NUM_SPECIES] = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"};
+static const string SPECIES_NAMES[10] = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"};
 
 struct Vertex {
     bool isLeaf;
@@ -26,10 +23,11 @@ char convert_nucleotide(int id);
 
 int main(int argc, char** argv) {
     uint64_t seed =     (argc >= 2) ? stoll(argv[1]) : time(0);
-    int species =       (argc == 5) ? stoi(argv[2]) : DEFAULT_NUM_SPECIES;
-    int seq_length =    (argc == 5) ? stoi(argv[3]) : DEFAULT_SEQUENCE_LENGTH;
-    double p_mutate =   (argc == 5) ? stod(argv[4]) : DEFAULT_P_MUTATE;
+    int species =       (argc == 5) ? stoi(argv[2]) : 10; // default # species = 10
+    int seq_length =    (argc == 5) ? stoi(argv[3]) : 1000; // default sequence length = 1000
+    double p_mutate =   (argc == 5) ? stod(argv[4]) : 0.2; // default site mutation probability = 0.2
 
+    seed %= 10000; // reduce seed mod 10000 for simplification
     string orig = to_string(seed);
     seed = init(seed);
     Vertex vertices[2*species-2];
@@ -72,8 +70,7 @@ int main(int argc, char** argv) {
     int start = nextInt(&seed, species);
     if (start > 1) start = 2*start-2;
     s.push(start);
-    for (int i = 0; i < seq_length; i++)
-        sequences[start][i] = nextInt(&seed, 4); // randomize start node
+    for (int i = 0; i < seq_length; i++) sequences[start][i] = nextInt(&seed, 4); // randomize start node
     while(!s.empty()) {
         int id = s.top();
         visited[id] = true;
