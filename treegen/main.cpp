@@ -23,20 +23,21 @@ struct Edge {
     }
 };
 
+// note purines % 2 = 0, pyrimidines % 2 = 1
 char convert_nucleotide(int id) {
-    if (id == 0) return 'A';
-    if (id == 1) return 'C';
-    if (id == 2) return 'G';
-    if (id == 3) return 'T';
+    if (id == 0) return 'A'; // pairs T, purine
+    if (id == 1) return 'T'; // pairs A, pyrimidine
+    if (id == 2) return 'G'; // pairs C, purine
+    if (id == 3) return 'C'; // pairs G, pyrimidine
     return '-';
 }
 
 int main(int argc, char** argv) {
-    uint64_t seed =     (argc >= 2) ? stoll(argv[1]) : (time(0) % 100000);
-    int species =       (argc == 5) ? stoi(argv[2]) : 10; // default # species = 10
-    int seq_length =    (argc == 5) ? stoi(argv[3]) : 1000; // default sequence length = 1000
-    double p_mutate =   (argc == 5) ? stod(argv[4]) : 0.2; // default site mutation probability = 0.2
-
+    // cmd line reading / initializations
+    uint64_t seed = (argc >= 2) ? stoll(argv[1]) : (time(0) % 100000); // default seed = time % 1M
+    int species =     (argc == 5) ? stoi(argv[2]) : 10; // default # species = 10
+    int seq_length =  (argc == 5) ? stoi(argv[3]) : 1000; // default sequence length = 1000
+    double p_mutate = (argc == 5) ? stod(argv[4]) : 0.2; // default mutation probability = 0.2
     uint64_t orig = seed;
     Vertex vertices[2*species-2];
     Edge edges[2*species-3];
@@ -56,7 +57,7 @@ int main(int argc, char** argv) {
         edges[e].v2 = 2*i-1;
     }
 
-    // log tree info
+    // log tree info to txt file
     ofstream file;
     file.open("results/tree_" + to_string(orig) + ".txt");
     for (int i = 0; i < 2*species-3; i++) {
@@ -76,7 +77,8 @@ int main(int argc, char** argv) {
     bool visited[2*species-2];
     for (int i = 0; i < 2*species-2; i++) visited[i] = false;
     s.push(0); // starting node doesn't matter
-    for (int i = 0; i < seq_length; i++) sequences[0][i] = nextInt(&seed, 4); // randomize 1st node
+    for (int i = 0; i < seq_length; i++) 
+        sequences[0][i] = nextInt(&seed, 4); // randomize 1st node
     while(!s.empty()) {
         int id = s.top();
         visited[id] = true;
@@ -89,24 +91,23 @@ int main(int argc, char** argv) {
                 // note id = ancestor, v = descendant
                 for (int i = 0; i < seq_length; i++)
                     sequences[v][i] = (nextFloat(&seed) < p_mutate) ?  
-                            nextInt(&seed, 4) : sequences[id][i]; // JC69
+                        nextInt(&seed, 4) : sequences[id][i]; // JC69
             }
         }
     }
     
-    // write the data
+    // write data to nex file
     file.open("results/data_" + to_string(orig) + ".nex");
     file << "begin data;" << endl;
     file << "dimensions ntax=" << species << " nchar=" << seq_length << ";" << endl;
     file << "format datatype=dna interleave=no gap=-;" << endl;
     file << "matrix" << endl;
     for (int v = 0; v < 2*species-2; v++) {
-        if (vertices[v].isLeaf) {
-            file << vertices[v].name << "\t";
-            for (int i = 0; i < seq_length; i++)
-                file << convert_nucleotide(sequences[v][i]);
-            file << endl;
-        }
+        if (!vertices[v].isLeaf) continue;
+        file << vertices[v].name << "\t";
+        for (int i = 0; i < seq_length; i++)
+            file << convert_nucleotide(sequences[v][i]);
+        file << endl;
     }
     file << ";" << endl;
     file << "end;" << endl;
