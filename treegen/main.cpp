@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <functional>
 #include <stack>
 #include "rng.h"
 using namespace std;
@@ -22,6 +23,22 @@ struct Edge {
         return -1;
     }
 };
+
+int roll_nucleotide(function<int(uint64_t*)> sm, int orig, double p_mutate, uint64_t* seed) {
+    if (nextFloat(seed) < p_mutate) return orig + sm(seed);
+    return orig;
+}
+
+int jc69(uint64_t* seed) {
+    return nextInt(seed, 4);
+}
+
+int k2p(uint64_t* seed) {
+    int a = nextInt(seed, 6);
+    if (a == 4) a = 0;
+    if (a == 5) a = 2;
+    return a;
+}
 
 // note purines % 2 = 0, pyrimidines % 2 = 1
 char convert_nucleotide(int id) {
@@ -90,8 +107,8 @@ int main(int argc, char** argv) {
                 // mutate the sequence
                 // note id = ancestor, v = descendant
                 for (int i = 0; i < seq_length; i++)
-                    sequences[v][i] = (nextFloat(&seed) < p_mutate) ?  
-                        nextInt(&seed, 4) : sequences[id][i]; // JC69
+                    sequences[v][i] = 
+                        roll_nucleotide(jc69, sequences[id][i], p_mutate, &seed); // JC69
             }
         }
     }
