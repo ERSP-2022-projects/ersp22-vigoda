@@ -16,26 +16,34 @@ struct Vertex {
 struct Edge {
     int v1, v2;
     Edge(int v1 = -1, int v2 = -1) : v1(v1), v2(v2) {}
-    int has(int id);
+    int has(int id) {
+        if (v1 == id) return v2;
+        if (v2 == id) return v1;
+        return -1;
+    }
 };
 
-char convert_nucleotide(int id);
+char convert_nucleotide(int id) {
+    if (id == 0) return 'A';
+    if (id == 1) return 'C';
+    if (id == 2) return 'G';
+    if (id == 3) return 'T';
+    return '-';
+}
 
 int main(int argc, char** argv) {
-    uint64_t seed =     (argc >= 2) ? stoll(argv[1]) : time(0);
+    uint64_t seed =     (argc >= 2) ? stoll(argv[1]) : (time(0) % 100000);
     int species =       (argc == 5) ? stoi(argv[2]) : 10; // default # species = 10
     int seq_length =    (argc == 5) ? stoi(argv[3]) : 1000; // default sequence length = 1000
     double p_mutate =   (argc == 5) ? stod(argv[4]) : 0.2; // default site mutation probability = 0.2
 
-    seed %= 10000; // reduce seed mod 10000 for simplification
-    string orig = to_string(seed);
-    seed = init(seed);
+    uint64_t orig = seed;
     Vertex vertices[2*species-2];
     Edge edges[2*species-3];
-    int order[2*species-2];
     int sequences[2*species-2][seq_length];
 
     // generate topology
+    seed = init(orig + 1);
     vertices[0] = Vertex(SPECIES_NAMES[0]);
     vertices[1] = Vertex(SPECIES_NAMES[1]);
     edges[0] = Edge(0, 1);
@@ -50,9 +58,7 @@ int main(int argc, char** argv) {
 
     // log tree info
     ofstream file;
-    file.open("results/tree_" + orig + ".txt");
-    // file << "root: " << vertices[start].name << endl;
-    // file << "edges: " << endl;
+    file.open("results/tree_" + to_string(orig) + ".txt");
     for (int i = 0; i < 2*species-3; i++) {
         Edge e = edges[i];
         if ((vertices[e.v1].isLeaf)) file << vertices[e.v1].name;
@@ -62,15 +68,15 @@ int main(int argc, char** argv) {
         else file << e.v2;
         file << endl;
     }
+    file.close();
     
     // dfs sequence generation
+    seed = init(orig + 2);
     stack<int> s;
     bool visited[2*species-2];
     for (int i = 0; i < 2*species-2; i++) visited[i] = false;
-    int start = nextInt(&seed, species);
-    if (start > 1) start = 2*start-2;
-    s.push(start);
-    for (int i = 0; i < seq_length; i++) sequences[start][i] = nextInt(&seed, 4); // randomize start node
+    s.push(0); // starting node doesn't matter
+    for (int i = 0; i < seq_length; i++) sequences[0][i] = nextInt(&seed, 4); // randomize 1st node
     while(!s.empty()) {
         int id = s.top();
         visited[id] = true;
@@ -80,17 +86,16 @@ int main(int argc, char** argv) {
             if (v != -1 && !visited[v]) {
                 s.push(v);
                 // mutate the sequence
-                for (int i = 0; i < seq_length; i++) {
-                    sequences[v][i] = // v = descendant
-                        (nextFloat(&seed) < p_mutate) ? nextInt(&seed, 4) : sequences[id][i];
-                }
+                // note id = ancestor, v = descendant
+                for (int i = 0; i < seq_length; i++)
+                    sequences[v][i] = (nextFloat(&seed) < p_mutate) ?  
+                            nextInt(&seed, 4) : sequences[id][i]; // JC69
             }
         }
     }
     
     // write the data
-    file.close();
-    file.open("results/data_" + orig + ".nex");
+    file.open("results/data_" + to_string(orig) + ".nex");
     file << "begin data;" << endl;
     file << "dimensions ntax=" << species << " nchar=" << seq_length << ";" << endl;
     file << "format datatype=dna interleave=no gap=-;" << endl;
@@ -108,18 +113,4 @@ int main(int argc, char** argv) {
     file.close();
     
     return 0;
-}
-
-int Edge::has(int id) {
-    if (v1 == id) return v2;
-    if (v2 == id) return v1;
-    return -1;
-}
-
-char convert_nucleotide(int id) {
-    if (id == 0) return 'A';
-    if (id == 1) return 'C';
-    if (id == 2) return 'G';
-    if (id == 3) return 'T';
-    return '-';
 }
