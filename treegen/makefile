@@ -1,8 +1,5 @@
-main: main.cpp generator.o
-	g++ main.cpp generator.o -o main.out
-
-generator.o: generator.h generator.cpp rng.h consts.h
-	g++ generator.cpp -c
+main: main.cpp
+	g++ main.cpp -o main.out
 
 clean: 
 	rm -f *.o
