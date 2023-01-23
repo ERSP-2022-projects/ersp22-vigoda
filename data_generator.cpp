@@ -189,8 +189,8 @@ int main() {
     vector<string> res = generateData(adjList, LENGTH);
     unordered_map<int, string> leaves = getLeaves(adjList, res);
     createFile(leaves);
-    // cout << "TOPOLOGY:" << endl;
-    // printTopology(adjList);
+    cout << "TOPOLOGY:" << endl;
+    printTopology(adjList);
     // cout << "ALL DNA:" << endl;
     // for (int i=0; i<res.size(); ++i) {
     //     cout << i << ": " << res.at(i) << endl;
