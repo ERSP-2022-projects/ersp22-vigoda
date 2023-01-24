@@ -34,30 +34,8 @@ char getRandomCharJC(double subProb, char c) {
     else { return c; }
 }
 
-// Input: Number of taxa
-// Output: Adjacency list representing tree topology
-vector<vector<int>> createTopology(int n) {
-    vector<vector<int>> adjList(2 * n - 1); // based on my tree setup, total # of nodes is 2n-1. 
-    int count = 0;
-    queue<int> queue;
-    queue.push(count++);
-    while (queue.size() < n) {
-        int curr = queue.front();
-        queue.pop();
-        // insert left neighbor
-        adjList.at(curr).push_back(count);
-        adjList.at(count).push_back(curr);
-        queue.push(count++);
-        // insert right neighbor
-        adjList.at(curr).push_back(count);
-        adjList.at(count).push_back(curr);
-        queue.push(count++);
-    }
-    return adjList;
-}
-
 // Better tree topology generator
-vector<vector<int>> createTopology2(int n) {
+vector<vector<int>> createTopology(int n) {
     vector<vector<int>> adjList(2 * n - 1); // total # of nodes will be 2n-1
     vector<int> leaves;
     leaves.push_back(0);
@@ -79,19 +57,10 @@ vector<vector<int>> createTopology2(int n) {
     return adjList;
 }
 
-// Gets a non-leaf node to start 
-int getStartingNode(vector<vector<int>>& adjList) {
-    int res = rand() % (int)adjList.size();
-    while (adjList.at(res).size() == 1) {
-        res = rand() % (int)adjList.size();
-    }
-    return res;
-}
-
 // Input: Tree topology, starting node, sequence length
 // Output: DNA sequences for all leaf nodes
+// Uses one distribution
 vector<string> generateData(vector<vector<int>>& adjList, int length) {
-    // int start = getStartingNode(adjList); Bugged?
     int start = 0;
     vector<string> res(adjList.size(), "");
     for (int i=0; i<length; ++i) {
@@ -107,7 +76,38 @@ vector<string> generateData(vector<vector<int>>& adjList, int length) {
             for (int j=0; j<adjList.at(curr).size(); ++j) {
                 int neighbor = adjList.at(curr).at(j);
                 if (!visited.at(neighbor)) {
-                    c = getRandomCharJC(0.2, res.at(curr).back()); // modify substituion rates here, rate = [0, 0.25]
+                    c = getRandomCharJC(0.1, res.at(curr).back()); // modify substituion rates here, rate = [0, 0.25]
+                    res.at(neighbor).push_back(c);
+                    queue.push(neighbor);
+                }
+            }
+        }
+    }
+    return res;
+}
+
+// Input: Tree topology, starting node, sequence length
+// Output: DNA sequences for all leaf nodes
+// Uses two distributions
+vector<string> generateData2(vector<vector<int>>& adjList, int length) {
+    vector<double> probs = {0.1, 0.12}; // modify substitution rates here
+    int start = 0;
+    vector<string> res(adjList.size(), "");
+    for (int i=0; i<length; ++i) {
+        queue<int> queue;
+        vector<bool> visited(adjList.size(), false);
+        queue.push(start);
+        char c = getRandomChar();
+        res.at(start).push_back(c);
+        while (!queue.empty()) {
+            int curr = queue.front();
+            queue.pop();
+            visited.at(curr) = true;
+            for (int j=0; j<adjList.at(curr).size(); ++j) {
+                int neighbor = adjList.at(curr).at(j);
+                if (!visited.at(neighbor)) {
+                    int index = rand() % 2;
+                    c = getRandomCharJC(probs[index], res.at(curr).back());
                     res.at(neighbor).push_back(c);
                     queue.push(neighbor);
                 }
@@ -185,7 +185,7 @@ void printTopology(vector<vector<int>>& adjList) {
 
 int main() {
     srand(time(NULL));
-    vector<vector<int>> adjList = createTopology2(TAXA);
+    vector<vector<int>> adjList = createTopology(TAXA);
     vector<string> res = generateData(adjList, LENGTH);
     unordered_map<int, string> leaves = getLeaves(adjList, res);
     createFile(leaves);
