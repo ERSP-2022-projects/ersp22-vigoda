@@ -107,7 +107,7 @@ vector<string> generateData(vector<vector<int>>& adjList, int length) {
             for (int j=0; j<adjList.at(curr).size(); ++j) {
                 int neighbor = adjList.at(curr).at(j);
                 if (!visited.at(neighbor)) {
-                    c = getRandomCharJC(0.1, res.at(curr).back()); // modify substituion rates here, rate = [0, 0.25]
+                    c = getRandomCharJC(0.2, res.at(curr).back()); // modify substituion rates here, rate = [0, 0.25]
                     res.at(neighbor).push_back(c);
                     queue.push(neighbor);
                 }
