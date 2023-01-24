@@ -1,0 +1,9 @@
+to use:
+    make treegen
+    ./treegen.out [params]
+params are: 
+    seed=longlong 
+    species=int 
+    seqlen=int 
+    p_mutate=double
+    mutation_model=str
