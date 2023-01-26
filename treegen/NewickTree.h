@@ -31,16 +31,19 @@ class NewickTree
 
 private:
     TreeNode *root;
-    void newickDFS(TreeNode *start, vector<string> &symbols);
+    void newickDFS(TreeNode *start, vector<string> &symbols, bool leafOnly);
+    void deleteDFS(TreeNode *start);
+    TreeNode *importDFS(TreeNode *parent, string &newickString, int &pos);
 
 public:
     NewickTree();
     NewickTree(string rootName);
     NewickTree(vector<Vertex> vertices, vector<Edge> edges, int rootIndex);
     NewickTree(vector<vector<int>> adj, vector<string> names, int rootIndex = 0);
-    //~NewickTree();
+    ~NewickTree();
     void printNewick(bool leafOnly = true);
     void exportNewick(string filename, bool leafOnly = true);
+    void importNewick(string filename);
 };
 
 #endif

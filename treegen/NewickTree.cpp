@@ -2,9 +2,16 @@
 #include <queue>
 #include <utility>
 #include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <stack>
+#include <map>
 using namespace std;
 
-NewickTree::NewickTree() {}
+NewickTree::NewickTree()
+{
+    root = nullptr;
+}
 NewickTree::NewickTree(string rootName)
 {
     root = new NewickTree::TreeNode(rootName, nullptr);
@@ -72,8 +79,24 @@ NewickTree::NewickTree(vector<vector<int>> adj, vector<string> names, int rootIn
         }
     }
 }
+void NewickTree::deleteDFS(NewickTree::TreeNode *start)
+{
+    if (start == nullptr)
+    {
+        return;
+    }
+    for (NewickTree::TreeNode *child : start->children)
+    {
+        deleteDFS(child);
+    }
+    delete start;
+}
+NewickTree::~NewickTree()
+{
+    deleteDFS(root);
+}
 // add leafOnly option
-void NewickTree::newickDFS(NewickTree::TreeNode *start, vector<string> &symbols)
+void NewickTree::newickDFS(NewickTree::TreeNode *start, vector<string> &symbols, bool leafOnly)
 {
     if (!start->isLeaf())
     {
@@ -85,16 +108,17 @@ void NewickTree::newickDFS(NewickTree::TreeNode *start, vector<string> &symbols)
             {
                 symbols.push_back(",");
             }
-            newickDFS(child, symbols);
+            newickDFS(child, symbols, leafOnly);
         }
         symbols.push_back(")");
     }
-    symbols.push_back(start->name);
+    if (!leafOnly || start->isLeaf())
+        symbols.push_back(start->name);
 }
 void NewickTree::printNewick(bool leafOnly)
 {
     vector<string> symbols;
-    newickDFS(root, symbols);
+    newickDFS(root, symbols, leafOnly);
     for (string symbol : symbols)
     {
         cout << symbol;
@@ -104,5 +128,60 @@ void NewickTree::printNewick(bool leafOnly)
 
 void NewickTree::exportNewick(string filename, bool leafOnly)
 {
+    ofstream treefile;
+    treefile.open(filename);
+    vector<string> symbols;
+    newickDFS(root, symbols, leafOnly);
+    for (string symbol : symbols)
+    {
+        treefile << symbol;
+    }
+    treefile.close();
+}
+NewickTree::TreeNode *NewickTree::importDFS(TreeNode *parent, string &newickString, int &pos)
+{
+    // pos should be position before current node
+    cout << "running at " << pos << endl;
+    int nextEnd = newickString.find_first_of("(,)", pos + 1);
+    cout << "found nextEnd at " << nextEnd << " which is " << newickString.at(nextEnd) << endl;
+    string currName;
+    if (nextEnd == pos + 1)
+    {
+        currName = "-";
+    }
+    else
+    {
+        currName = newickString.substr(pos + 1, nextEnd - pos - 1);
+        reverse(currName.begin(), currName.end());
+    }
+    TreeNode *currNode = new TreeNode(currName, parent);
+    if (parent != nullptr)
+        cout << "creating " << currName << " under " << parent->name << endl;
+    pos = nextEnd;
+    if (newickString.at(nextEnd) == ')')
+    {
+        while (newickString.at(pos) != '(')
+        {
+            currNode->children.push_back(importDFS(currNode, newickString, pos));
+        }
+        pos += 1;
+    }
+    cout << "returning at pos " << pos << endl;
+    return currNode;
+}
+void NewickTree::importNewick(string filename)
+{
+    cout << "got hereee!" << endl;
+    deleteDFS(root);
+    cout << "got here!!" << endl;
+    ifstream treefile;
+    treefile.open(filename);
+    string newickString;
+    getline(treefile, newickString);
+    reverse(newickString.begin(), newickString.end());
+    int pos = -1;
+    cout << "got here!" << endl;
+    cout << newickString << endl;
+    root = importDFS(nullptr, newickString, pos);
     return;
 }
