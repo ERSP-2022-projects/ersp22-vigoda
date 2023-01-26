@@ -46,9 +46,9 @@ int main(int argc, char **argv) {
         else cerr << param << " is not a valid parameter" << endl;
     }
     uint64_t orig = seed;
-    Vertex vertices[2*species-2];
-    Edge edges[2*species-3];
-    int sequences[2*species-2][seqlen];
+    vector<Vertex> vertices(2 * species - 2);
+    vector<Edge> edges(2 * species - 3);
+    int sequences[2 * species - 2][seqlen];
 
     // generate topology
     seed = init(orig + 1);
