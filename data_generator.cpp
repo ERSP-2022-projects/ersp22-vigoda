@@ -12,29 +12,29 @@ const int LENGTH = 1000; // set length of dna sequence
 
 // Only use for setting the initial char, choose U.A.R
 char getRandomChar() {
-    double num = (double)rand() / RAND_MAX;
-    if (num < 0.25) { return 'A'; }
-    else if (num < 0.5) { return 'G'; }
-    else if (num < 0.75) { return 'T'; }
-    else { return 'C'; }
+    vector<char> chars= {'A','G','T','C'};
+    int index = rand() % 4;
+    return chars[index];
 }
 
 // Set char based on Jukes Cantor model. Input substitution probability
 char getRandomCharJC(double subProb, char c) {
     vector<char> chars = {'A','G','T','C'};
     for (int i=0; i<chars.size(); ++i) {
-        if (chars.at(i) == c) {
+        if (chars[i] == c) {
             chars.erase(chars.begin() + i);
         }
     }
     double num = (double)rand() / RAND_MAX;
-    if (num < subProb) { return chars.at(0); }
-    else if (num < 2 * subProb) { return chars.at(1); }
-    else if (num < 3 * subProb) { return chars.at(2); }
+    if (num < subProb) { return chars[0]; }
+    else if (num < 2 * subProb) { return chars[1]; }
+    else if (num < 3 * subProb) { return chars[2]; }
     else { return c; }
 }
 
-// Better tree topology generator
+// TODO: Add K2P substituion model
+
+// Tree topology generator
 vector<vector<int>> createTopology(int n) {
     vector<vector<int>> adjList(2 * n - 1); // total # of nodes will be 2n-1
     vector<int> leaves;
@@ -43,124 +43,76 @@ vector<vector<int>> createTopology(int n) {
     while (leaves.size() < n) {
         // randomly pick a leaf to split
         int index = rand() % (int)leaves.size(); 
-        int parent = leaves.at(index);
+        int parent = leaves[index];
         leaves.erase(leaves.begin() + index); // O(n) x_x
         // add left child
         leaves.push_back(++count);
-        adjList.at(parent).push_back(count);
-        adjList.at(count).push_back(parent);
+        adjList[parent].push_back(count);
+        adjList[count].push_back(parent);
         // add right child
         leaves.push_back(++count);
-        adjList.at(parent).push_back(count);
-        adjList.at(count).push_back(parent);
+        adjList[parent].push_back(count);
+        adjList[count].push_back(parent);
     }
     return adjList;
 }
 
-// Input: Tree topology, starting node, sequence length
-// Output: DNA sequences for all leaf nodes
-// Uses one distribution
-vector<string> generateData(vector<vector<int>>& adjList, int length) {
-    int start = 0;
-    vector<string> res(adjList.size(), "");
-    for (int i=0; i<length; ++i) {
-        queue<int> queue;
-        vector<bool> visited(adjList.size(), false);
-        queue.push(start);
-        char c = getRandomChar();
-        res.at(start).push_back(c);
-        while (!queue.empty()) {
-            int curr = queue.front();
-            queue.pop();
-            visited.at(curr) = true;
-            for (int j=0; j<adjList.at(curr).size(); ++j) {
-                int neighbor = adjList.at(curr).at(j);
-                if (!visited.at(neighbor)) {
-                    c = getRandomCharJC(0.1, res.at(curr).back()); // modify substituion rates here, rate = [0, 0.25]
-                    res.at(neighbor).push_back(c);
-                    queue.push(neighbor);
-                }
-            }
-        }
-    }
-    return res;
-}
-
-// Input: Tree topology, starting node, sequence length
-// Output: DNA sequences for all leaf nodes
-// Uses two distributions
-vector<string> generateData2(vector<vector<int>>& adjList, int length) {
-    vector<double> probs = {0.1, 0.12}; // modify substitution rates here
-    int start = 0;
-    vector<string> res(adjList.size(), "");
-    for (int i=0; i<length; ++i) {
-        queue<int> queue;
-        vector<bool> visited(adjList.size(), false);
-        queue.push(start);
-        char c = getRandomChar();
-        res.at(start).push_back(c);
-        while (!queue.empty()) {
-            int curr = queue.front();
-            queue.pop();
-            visited.at(curr) = true;
-            for (int j=0; j<adjList.at(curr).size(); ++j) {
-                int neighbor = adjList.at(curr).at(j);
-                if (!visited.at(neighbor)) {
-                    int index = rand() % 2;
-                    c = getRandomCharJC(probs[index], res.at(curr).back());
-                    res.at(neighbor).push_back(c);
-                    queue.push(neighbor);
-                }
-            }
-        }
-    }
-    return res;
-}
-
-// Extracts <leaf node, DNA> from tree topology and DNA sequences
-unordered_map<int, string> getLeaves(vector<vector<int>>& adjList, vector<string>& data) {
-    unordered_map<int, string> res;
+// Input: Tree topology via an adjacency list
+// Output: Maps each leaf node to a taxa label
+unordered_map<int,int> getLeafMap(vector<vector<int>>& adjList) {
+    unordered_map<int,int> res;
+    int label = 0;
     for (int i=0; i<adjList.size(); ++i) {
-        if (adjList.at(i).size() == 1) {
-            res.insert({i, data.at(i)});
+        if (adjList[i].size() == 1) {
+            res.insert({i, label++});
         }
     }
     return res;
 }
 
-// For testing purposes, gets the average number of substitutions from starting node to leaves
-void getDifferenceRate(vector<string>& res, int start) {
-    string original = res.at(start);
-    vector<int> diffs(TAXA, 0);
-    vector<string> leaves;
-    for (int i = 0; i<TAXA; ++i) {
-        leaves.push_back(res.at(res.size() - 1 - i));
-    }
-    double sum = 0.0;
-    for (int i=0; i<TAXA; ++i) {
-        for (int j=0; j<LENGTH; ++j) {
-            if (leaves.at(i).at(j) != original.at(j)) {
-                ++diffs.at(i);
+// Input: Vector of k tree topologies 
+// Output: Vector of leaf node dna sequences
+vector<string> generateData(vector<vector<vector<int>>>& treeTops, vector<unordered_map<int,int>>& leafMaps) {
+    vector<string> res(TAXA, "");
+    for (int i=0; i<LENGTH; ++i) {
+        int treeIndex = rand() % (int)treeTops.size(); // randomly picks a tree topology
+        queue<int> queue;
+        vector<bool> visited(treeTops[0].size(), false);
+        queue.push(0);
+        visited[0] = true;
+        char c = getRandomChar();
+        while (!queue.empty()) {
+            int curr = queue.front();
+            queue.pop();
+            for (int j=0; j<treeTops[treeIndex][curr].size(); ++j) {
+                int neigh = treeTops[treeIndex][curr][j];
+                if (!visited[neigh]) {
+                    visited[neigh] = true;
+                    c = getRandomCharJC(0.1, c);
+                    queue.push(neigh);
+                    if (treeTops[treeIndex][neigh].size() == 1) { // if leaf node, append char to DNA sequence
+                        int label = leafMaps[treeIndex][neigh];
+                        res[label].push_back(c);
+                    }
+                }
             }
         }
-        sum += diffs.at(i);
     }
-    double avgDiffs = sum / TAXA;
-    cout << "Average Diffs: " << avgDiffs << endl;
+    return res;
 }
 
-// Creates and writes to file
-void createFile(unordered_map<int, string>& leaves) {
+// Creates and writes to .nex file
+void createFile(vector<string>& leafData) {
     fstream myFile;
-    myFile.open("test-tree.nex", ios::out);
+    myFile.open("tree.nex", ios::out);
     if (myFile.is_open()) {
         myFile << "#NEXUS" << endl << endl;
         myFile << "begin data;" << endl;
         myFile << "\tdimensions ntax=" << TAXA << " nchar=" << LENGTH << ";" << endl;
         myFile << "\tformat datatype=dna interleave=no gap=-;" << endl;
         myFile << "\tmatrix" << endl;
-        for (auto it : leaves) {
-            myFile << "Node" << it.first << "\t" << it.second << endl;
+        for (int i=0; i<leafData.size(); ++i) {
+            myFile << "Taxa" << i+1 << "\t" << leafData[i] << endl;
         }
         myFile << "\t;" << endl;
         myFile << "end;" << endl;
@@ -172,28 +124,79 @@ void createFile(unordered_map<int, string>& leaves) {
     }
 }
 
-// Prints adjacency list for testing
+// DFS for Newick format
+void newickDfs(vector<vector<int>>& adjList, unordered_map<int,int>& leafMap, string& res, int cur, int par) {
+    if (leafMap.find(cur) == leafMap.end()) {
+        vector<int> children;
+        for (auto i : adjList[cur]) {
+            if (i != par) {
+                children.push_back(i);
+            }
+        }
+        res += "(";
+        newickDfs(adjList, leafMap, res, children[0], cur);
+        res += ",";
+        newickDfs(adjList, leafMap, res, children[1], cur);
+        res += ")";
+    }
+    else {
+        res += to_string(leafMap[cur]+1);
+    }   
+}
+
+// Creates Newick format
+string createNewick(vector<vector<int>>& adjList, unordered_map<int,int>& leafMap) {
+    string res = "";
+    newickDfs(adjList, leafMap, res, 0, -1);
+    return res;
+}
+
+// For testing, prints adjacency list
 void printTopology(vector<vector<int>>& adjList) {
+    cout << "TOPOLOGY:" << endl;
     for (int i=0; i<adjList.size(); ++i) {
         cout << i << ": ";
-        for (int j=0; j<adjList.at(i).size(); ++j) {
-            cout << adjList.at(i).at(j) << " ";
+        for (int j=0; j<adjList[i].size(); ++j) {
+            cout << adjList[i][j] << " ";
         }
         cout << endl;
     }
 }
 
+// For testing, prints leaf map
+void printLeafMap(unordered_map<int,int>& leafMap) {
+    for (auto i : leafMap) {
+        cout << "(" << i.first << ", " << i.second << ")  ";
+    }
+    cout << endl;
+}
+
+// Main function, generates leaf data using a k-mixture of tree topologies
+void generate(int k) {
+    vector<vector<vector<int>>> treeTops(k); // stores tree topologies
+    vector<unordered_map<int,int>> leafMaps(k); // stores leaf map for each tree topology
+    vector<string> newickTrees(k); // stores newick format for each tree topology
+    for (int i=0; i<k; ++i) {
+        treeTops[i] = createTopology(TAXA);
+        leafMaps[i] = getLeafMap(treeTops[i]);
+        newickTrees[i] = createNewick(treeTops[i], leafMaps[i]);
+    }
+    vector<string> leafData = generateData(treeTops, leafMaps);
+    createFile(leafData);
+    for (int i=0; i<k; ++i) {
+        cout << "Newick Format " << i+1 << ": " << newickTrees[i] << endl; 
+    }
+    // TESTING:
+    // for (int i=0; i<k; ++i) {
+    //     cout << endl;
+    //     printTopology(treeTops[i]);
+    //     cout << endl;
+    //     printLeafMap(leafMaps[i]);
+    // }
+}
+
 int main() {
     srand(time(NULL));
-    vector<vector<int>> adjList = createTopology(TAXA);
-    vector<string> res = generateData(adjList, LENGTH);
-    unordered_map<int, string> leaves = getLeaves(adjList, res);
-    createFile(leaves);
-    cout << "TOPOLOGY:" << endl;
-    printTopology(adjList);
-    // cout << "ALL DNA:" << endl;
-    // for (int i=0; i<res.size(); ++i) {
-    //     cout << i << ": " << res.at(i) << endl;
-    // }
+    generate(2); // MR BAYES FAILED :P
     return 0;
 }
