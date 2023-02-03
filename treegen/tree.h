@@ -1,8 +1,11 @@
 #ifndef TREE_H
 #define TREE_H
 
-#include <string>
+#include "mutationmodels.h"
+#include <vector>
 using namespace std;
+
+static const string SPECIES_NAMES[10] = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"};
 
 struct Vertex {
     bool isLeaf;
@@ -21,6 +24,30 @@ struct Edge {
             return v1;
         return -1;
     }
+};
+
+class Tree {
+    private:
+        uint64_t orig;
+        int species, seqlen;
+        double p_mutate;
+        mutation_model smm;
+        vector<vector<int> > sequences;
+        vector<Vertex> vertices;
+        vector<Edge> edges;
+
+    public:
+        Tree(uint64_t seed, const int species, const int seqlen, double p_mutate, mutation_model smm) : 
+            orig(seed), species(species), seqlen(seqlen), p_mutate(p_mutate), smm(smm),
+            vertices(2 * species - 2), edges(2 * species - 3) {
+                sequences = vector<vector<int>>(2 * species - 2, vector<int>(seqlen));
+            }
+        vector<Vertex> getVertices() { return vertices; }
+        vector<Edge> getEdges() { return edges; }
+        void generateTopology();
+        void logTreeTxt();
+        void dfsSequenceGen();
+        void writeToNexus();
 };
 
 #endif

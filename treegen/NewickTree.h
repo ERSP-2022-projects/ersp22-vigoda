@@ -1,5 +1,5 @@
-#ifndef NEWICK_TREE
-#define NEWICK_TREE
+#ifndef NEWICKTREE_H
+#define NEWICKTREE_H
 
 #include "tree.h"
 #include <string>
