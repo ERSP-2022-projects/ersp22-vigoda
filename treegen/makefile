@@ -1,7 +1,7 @@
 default: treegen
 
-treegen: treegen.cpp NewickTree.o
-	g++ --std=c++17 treegen.cpp NewickTree.o -o treegen.out
+treegen: treegen.cpp tree.o NewickTree.o
+	g++ --std=c++17 treegen.cpp tree.o NewickTree.o -o treegen.out
 	mkdir -p results
 
 NewickTree.o: NewickTree.cpp NewickTree.h
@@ -10,8 +10,11 @@ NewickTree.o: NewickTree.cpp NewickTree.h
 
 newicktest: newicktest.cpp NewickTree.o
 	g++ --std=c++17 newicktest.cpp NewickTree.o -o newicktest
+
+tree.o: tree.h tree.cpp
+	g++ --std=c++17 -c tree.cpp
+
 clean: 
 	rm -f *.o
 	rm -f *.out
-	rm -f results/*.txt
-	rm -f results/*.nex
+	rm -r results/*
