@@ -172,9 +172,12 @@ void NewickTree::importNewick(string filename)
     treefile.open(filename);
     string newickString;
     getline(treefile, newickString);
+    if (*newickString.rbegin() == ';')
+    {
+        newickString.pop_back();
+    }
     reverse(newickString.begin(), newickString.end());
     int pos = -1;
-    cout << "got here!" << endl;
     cout << newickString << endl;
     root = importDFS(nullptr, newickString, pos);
     return;
@@ -265,7 +268,7 @@ void NewickTree::generateSequences(int sequenceLength)
                     cummSum += candidate.second;
                     if (cummSum >= randChoice)
                     {
-                        cout << nucleotide << " " << candidate.first << " " << cummSum << " " << candidate.second << endl;
+                        // cout << nucleotide << " " << candidate.first << " " << cummSum << " " << candidate.second << endl;
                         childSeq.push_back(candidate.first);
                         break;
                     }
@@ -285,16 +288,26 @@ void NewickTree::generateSequences(int sequenceLength)
         // }
     }
 }
-void NewickTree::toNexus(string filename, map<string, string> sequences)
+void NewickTree::toNexus(string filename, map<string, string> sequences, bool numericSort)
 {
     ofstream file;
     file.open(filename);
     file << "begin data;" << endl;
-    file << "dimensions ntax=" << getLeafCount() << " nchar=" << sequenceLength << ";" << endl;
+    file << "dimensions ntax=" << sequences.size() << " nchar=" << sequences.begin()->second.size() << ";" << endl;
     file << "format datatype=dna interleave=no gap=-;" << endl;
     file << "matrix" << endl;
-
+    // allows you to process
+    vector<pair<string, string>> ordered_sequences;
     for (pair<string, string> sequence : sequences)
+    {
+        ordered_sequences.push_back(sequence);
+    }
+    if (numericSort)
+    {
+        sort(ordered_sequences.begin(), ordered_sequences.end(), ([](const pair<string, string> &a, const pair<string, string> &b)
+                                                                  { return stoi(a.first) < stoi(b.first); }));
+    }
+    for (pair<string, string> sequence : ordered_sequences)
     {
         file << sequence.first << "\t" << sequence.second << endl;
     }
@@ -327,16 +340,16 @@ map<string, string> NewickTree::getSequences()
     }
     return sequences;
 }
-void NewickTree::exportNexus(string filename)
+void NewickTree::exportNexus(string filename, bool numericSort)
 {
-    toNexus(filename, getSequences());
+    toNexus(filename, getSequences(), numericSort);
 }
-map<string, string> NewickTree::mixtureModel(vector<NewickTree> trees, vector<double> weights = vector<double>())
+map<string, string> NewickTree::mixtureModel(vector<NewickTree *> trees, vector<double> weights = vector<double>())
 {
     // validate that trees is not empty
     if (trees.size() == 0)
     {
-        throw invalid_argument("NewickTree::mixtureModel 'trees' must be non emptu vector of type NewickTree");
+        throw invalid_argument("NewickTree::mixtureModel 'trees' must be non empty vector of type NewickTree");
     }
     // validate that weights is the same length as trees or is 0
     if (weights.size() != 0 && weights.size() != trees.size())
@@ -344,10 +357,10 @@ map<string, string> NewickTree::mixtureModel(vector<NewickTree> trees, vector<do
         throw invalid_argument("NewickTree::mixtureModel 'weights' vector must be either empty or of the same dimensions as 'trees'");
     }
     // validate that all trees have the same leaves
-    int leafCount = trees[0].getLeafCount();
-    for (NewickTree tree : trees)
+    int leafCount = trees[0]->getLeafCount();
+    for (NewickTree *tree : trees)
     {
-        if (tree.getLeafCount() != leafCount)
+        if (tree->getLeafCount() != leafCount)
         {
             throw invalid_argument("NewickTree::mixtureModel all NewickTree's in 'trees' vector must have the same number of leaf nodes");
         }
@@ -355,7 +368,7 @@ map<string, string> NewickTree::mixtureModel(vector<NewickTree> trees, vector<do
     vector<map<string, string>> sequenceList(trees.size());
     for (int i = 0; i < trees.size(); i++)
     {
-        sequenceList[i] = trees[i].getSequences();
+        sequenceList[i] = trees[i]->getSequences();
     }
     set<string> keySet;
     for (pair<string, string> keyPair : sequenceList[0])
@@ -374,10 +387,10 @@ map<string, string> NewickTree::mixtureModel(vector<NewickTree> trees, vector<do
     }
 
     // validate that all trees have equal sequence lengths
-    int sequenceLength = trees[0].getSequenceLength();
-    for (NewickTree tree : trees)
+    int sequenceLength = trees[0]->getSequenceLength();
+    for (NewickTree *tree : trees)
     {
-        if (tree.getSequenceLength() != sequenceLength)
+        if (tree->getSequenceLength() != sequenceLength)
         {
             throw invalid_argument("NewickTree::mixtureModel all NewickTree's in 'trees' vector must have the same sequence length");
         }

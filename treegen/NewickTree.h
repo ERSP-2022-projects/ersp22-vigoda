@@ -47,25 +47,42 @@ private:
     void adjToTree(vector<vector<int>> adj, vector<string> names, int rootIndex);
     void newickDFS(TreeNode *start, vector<string> &symbols, bool leafOnly);
     void deleteDFS(TreeNode *start);
-    void toNexus(string filename, map<string, string> sequences);
     TreeNode *importDFS(TreeNode *parent, string &newickString, int &pos);
 
 public:
+    /**
+     * Constructs an empty tree with a null 'root'
+     */
     NewickTree();
+    /**
+     * Constructs a tree that only has a 'root' named 'rootName'
+     *
+     * @param string rootName The name of the root of the tree
+     */
     NewickTree(string rootName);
+    /**
+     * Constructsa tree from a Vertex-Edge representation.
+     *
+     * @param vector<Vertex> vertices A vector of all the vertices in a graph with their name
+     *
+     */
     NewickTree(vector<Vertex> vertices, vector<Edge> edges, int rootIndex);
     NewickTree(vector<vector<int>> adj, vector<string> names, int rootIndex = 0);
     ~NewickTree();
+    /*
+
+    */
     int getSequenceLength();
     int getLeafCount();
     void generateSequences(int sequenceLength);
     void printNewick(bool leafOnly = true);
     void exportNewick(string filename, bool leafOnly = true);
     void importNewick(string filename);
-    void exportNexus(string filename);
+    void exportNexus(string filename, bool numericSort = false);
     void setTransition(map<char, map<char, double>> transitionMatrix = map<char, map<char, double>>());
     map<string, string> getSequences();
-    static map<string, string> mixtureModel(vector<NewickTree> trees, vector<double> weights);
+    static void toNexus(string filename, map<string, string> sequences, bool numericSort = false);
+    static map<string, string> mixtureModel(vector<NewickTree *> trees, vector<double> weights);
 };
 
 #endif

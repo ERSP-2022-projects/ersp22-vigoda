@@ -6,6 +6,10 @@ treegen: treegen.cpp NewickTree.o
 
 NewickTree.o: NewickTree.cpp NewickTree.h
 	g++ --std=c++17 -c NewickTree.cpp 
+
+
+newicktest: newicktest.cpp NewickTree.o
+	g++ --std=c++17 newicktest.cpp NewickTree.o -o newicktest
 clean: 
 	rm -f *.o
 	rm -f *.out
