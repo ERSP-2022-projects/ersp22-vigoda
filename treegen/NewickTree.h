@@ -40,6 +40,7 @@ class NewickTree
     };
 
 private:
+    static int createdCount;
     int sequenceLength;
     TreeNode *root;
     map<char, map<char, double>> transitionMatrix;
@@ -66,6 +67,7 @@ public:
      * @param vector<Vertex> vertices A vector of all the vertices in a graph with their name
      *
      */
+    NewickTree(int numLeafs);
     NewickTree(vector<Vertex> vertices, vector<Edge> edges, int rootIndex);
     NewickTree(vector<vector<int>> adj, vector<string> names, int rootIndex = 0);
     ~NewickTree();
@@ -74,6 +76,8 @@ public:
     */
     int getSequenceLength();
     int getLeafCount();
+    void setName(string name);
+    string getName();
     void generateSequences(int sequenceLength);
     void printNewick(bool leafOnly = true);
     void exportNewick(string filename, bool leafOnly = true);
@@ -81,7 +85,7 @@ public:
     void exportNexus(string filename, bool numericSort = false);
     void setTransition(map<char, map<char, double>> transitionMatrix = map<char, map<char, double>>());
     map<string, string> getSequences();
-    static void toNexus(string filename, map<string, string> sequences, bool numericSort = false);
+    static void toNexus(string filename, map<string, string> sequences, vector<NewickTree *> trees = vector<NewickTree *>(), bool numericSort = false);
     static map<string, string> mixtureModel(vector<NewickTree *> trees, vector<double> weights);
 };
 

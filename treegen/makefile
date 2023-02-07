@@ -7,9 +7,8 @@ treegen: treegen.cpp tree.o NewickTree.o
 NewickTree.o: NewickTree.cpp NewickTree.h
 	g++ --std=c++17 -c NewickTree.cpp 
 
-
-newicktest: newicktest.cpp NewickTree.o
-	g++ --std=c++17 newicktest.cpp NewickTree.o -o newicktest
+generateMixture: generateMixture.cpp NewickTree.o
+	g++ --std=c++17 generateMixture.cpp NewickTree.o -o generateMixture
 
 tree.o: tree.h tree.cpp
 	g++ --std=c++17 -c tree.cpp

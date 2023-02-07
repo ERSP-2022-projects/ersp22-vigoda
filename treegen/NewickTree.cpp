@@ -14,17 +14,15 @@ using namespace std;
 NewickTree::NewickTree()
 {
     root = nullptr;
-}
-NewickTree::NewickTree(string rootName)
-{
     sequenceLength = 0;
     transitionMatrix = map<char, map<char, double>>();
+}
+NewickTree::NewickTree(string rootName) : NewickTree()
+{
     root = new NewickTree::TreeNode(rootName, nullptr);
 }
-NewickTree::NewickTree(vector<Vertex> vertices, vector<Edge> edges, int rootIndex)
+NewickTree::NewickTree(vector<Vertex> vertices, vector<Edge> edges, int rootIndex) : NewickTree()
 {
-    sequenceLength = 0;
-    transitionMatrix = map<char, map<char, double>>();
     vector<string> names(vertices.size());
     for (int i = 0; i < names.size(); i++)
     {
@@ -39,14 +37,42 @@ NewickTree::NewickTree(vector<Vertex> vertices, vector<Edge> edges, int rootInde
     // should check that adj and names are same size and rootIndex < size later
     adjToTree(adj, names, rootIndex);
 }
-NewickTree::NewickTree(vector<vector<int>> adj, vector<string> names, int rootIndex)
+NewickTree::NewickTree(vector<vector<int>> adj, vector<string> names, int rootIndex) : NewickTree()
 {
     // should check that adj and names are same size and rootIndex < size later
     sequenceLength = 0;
     transitionMatrix = map<char, map<char, double>>();
     adjToTree(adj, names, rootIndex);
 }
+NewickTree::NewickTree(int numLeafs) : NewickTree()
+{
+    vector<vector<int>> adjList(2 * numLeafs - 1); // total # of nodes will be 2n-1
+    vector<int> leaves;
+    leaves.push_back(0);
+    int count = 0;
+    while (leaves.size() < numLeafs)
+    {
+        // randomly pick a leaf to split
+        int index = rand() % (int)leaves.size();
+        int parent = leaves[index];
+        leaves.erase(leaves.begin() + index); // O(n) x_x
+        // add left child
+        leaves.push_back(++count);
+        adjList[parent].push_back(count);
+        adjList[count].push_back(parent);
+        // add right child
+        leaves.push_back(++count);
+        adjList[parent].push_back(count);
+        adjList[count].push_back(parent);
+    }
 
+    vector<string> names(adjList.size(), "-");
+    for (int i = 0; i < leaves.size(); i++)
+    {
+        names[leaves[i]] = to_string(i + 1);
+    }
+    adjToTree(adjList, names, 0);
+}
 void NewickTree::adjToTree(vector<vector<int>> adj, vector<string> names, int rootIndex)
 {
     vector<bool> visited(adj.size());
@@ -120,6 +146,7 @@ void NewickTree::printNewick(bool leafOnly)
     {
         cout << symbol;
     }
+    cout << ";";
     cout << endl;
 }
 
@@ -133,6 +160,7 @@ void NewickTree::exportNewick(string filename, bool leafOnly)
     {
         treefile << symbol;
     }
+    treefile << ";";
     treefile.close();
 }
 NewickTree::TreeNode *NewickTree::importDFS(TreeNode *parent, string &newickString, int &pos)
@@ -237,7 +265,8 @@ void NewickTree::generateSequences(int sequenceLength)
         }
     }
     this->sequenceLength = sequenceLength;
-    mt19937 mt(time(nullptr));
+    random_device rd;
+    mt19937 mt(rd());
     default_random_engine gen;
     uniform_real_distribution<double> distribution(0.0,
                                                    1.0);
@@ -288,7 +317,7 @@ void NewickTree::generateSequences(int sequenceLength)
         // }
     }
 }
-void NewickTree::toNexus(string filename, map<string, string> sequences, bool numericSort)
+void NewickTree::toNexus(string filename, map<string, string> sequences, vector<NewickTree *> trees, bool numericSort)
 {
     ofstream file;
     file.open(filename);
@@ -314,6 +343,23 @@ void NewickTree::toNexus(string filename, map<string, string> sequences, bool nu
 
     file << ";" << endl;
     file << "end;" << endl;
+    if (trees.size() > 0)
+    {
+        file << "begin trees;" << endl;
+        for (int i = 0; i < trees.size(); i++)
+        {
+            NewickTree *treePointer = trees[i];
+            file << "tree tree" << i + 1 << " = ";
+            vector<string> symbols;
+            treePointer->newickDFS(treePointer->root, symbols, true);
+            for (string symbol : symbols)
+            {
+                file << symbol;
+            }
+            file << ";" << endl;
+        }
+        file << "end;" << endl;
+    }
     file.close();
 }
 map<string, string> NewickTree::getSequences()
@@ -342,7 +388,7 @@ map<string, string> NewickTree::getSequences()
 }
 void NewickTree::exportNexus(string filename, bool numericSort)
 {
-    toNexus(filename, getSequences(), numericSort);
+    toNexus(filename, getSequences(), vector<NewickTree *>{this}, numericSort);
 }
 map<string, string> NewickTree::mixtureModel(vector<NewickTree *> trees, vector<double> weights = vector<double>())
 {
