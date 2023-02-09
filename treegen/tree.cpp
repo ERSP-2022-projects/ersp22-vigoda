@@ -70,9 +70,9 @@ void Tree::dfsSequenceGen() {
 }
 
 void Tree::writeToNexus() {
-    filesystem::create_directory("results/" + to_string(orig));
+    // filesystem::create_directory("results/" + to_string(orig));
     ofstream file;
-    file.open("results/" + to_string(orig) + "/data.nex");
+    file.open("results/" + to_string(orig) + "_data.nex");
     file << "begin data;" << endl;
     file << "dimensions ntax=" << species << " nchar=" << seqlen << ";" << endl;
     file << "format datatype=dna interleave=no gap=-;" << endl;
