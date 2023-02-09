@@ -183,7 +183,7 @@ NewickTree::TreeNode *NewickTree::importDFS(TreeNode *parent, string &newickStri
     // if (parent != nullptr)
     //     cout << "creating " << currName << " under " << parent->name << endl;
     pos = nextEnd;
-    if (newickString.at(nextEnd) == ')')
+    if (newickString.at(nextEnd) == ')' || parent == nullptr && pos < newickString.size())
     {
         while (newickString.at(pos) != '(')
         {
@@ -449,6 +449,16 @@ map<string, string> NewickTree::mixtureModel(vector<NewickTree *> trees, vector<
         {
             weights[i] = 1.0 / weights.size();
         }
+    }
+    double epsilon = 1e-7;
+    double weightSum = 0.0;
+    for (double weight : weights)
+    {
+        weightSum += weight;
+    }
+    if (abs(1.0 - weightSum) > epsilon)
+    {
+        throw invalid_argument("NewickTree::mixtureModel 'weights' must sum up to 1.0");
     }
     default_random_engine gen;
     uniform_real_distribution<double> distribution(0.0, 1.0);

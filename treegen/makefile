@@ -10,6 +10,9 @@ NewickTree.o: NewickTree.cpp NewickTree.h
 generateMixture: generateMixture.cpp NewickTree.o
 	g++ --std=c++17 generateMixture.cpp NewickTree.o -o generateMixture
 
+newicktest: newicktest.cpp NewickTree.o
+	g++ --std=c++17 newicktest.cpp NewickTree.o -o newicktest
+
 tree.o: tree.h tree.cpp
 	g++ --std=c++17 -c tree.cpp
 
