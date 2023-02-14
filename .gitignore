@@ -1,3 +1,36 @@
 .DS_Store
-results/*
 documentation/*
+
+# Compiled object files
+*.o
+*.obj
+
+# Compiled binary files
+*.exe
+*.out
+
+# Dependency files
+*.d
+
+# Debugging files
+*.pdb
+*.ilk
+
+# Generated documentation
+/docs
+
+# Build output directories
+/bin
+/build
+/Debug
+/Release
+
+# IDE-specific files and directories
+.vscode/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.suo
+*.opensdf
+*.sdf
