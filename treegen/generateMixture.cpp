@@ -22,10 +22,10 @@ int main()
     filesystem::create_directory("results/" + to_string(orig));
     filesystem::create_directory("results/" + to_string(orig) + "/mixture");
     cout << "storing results in results/" << to_string(orig) << endl;
-    tree1.exportNewick("results/" + to_string(orig) + "/tree1.txt");
-    tree2.exportNewick("results/" + to_string(orig) + "/tree2.txt");
-    tree1.exportNexus("results/" + to_string(orig) + "/tree1.nex", true);
-    tree2.exportNexus("results/" + to_string(orig) + "/tree2.nex", true);
+    tree1.exportNewick("results/" + to_string(orig) + "_tree1.txt");
+    tree2.exportNewick("results/" + to_string(orig) + "_tree2.txt");
+    tree1.exportNexus("results/" + to_string(orig) + "_tree1.nex", true);
+    tree2.exportNexus("results/" + to_string(orig) + "_tree2.nex", true);
     map<string, string> mixture = NewickTree::mixtureModel(vector<NewickTree *>{&tree1, &tree2}, vector<double>{0.5, 0.5});
     NewickTree::toNexus(
         "results/" + to_string(orig) + "/mixture/mixture.nex", mixture, vector<NewickTree *>{&tree1, &tree2}, true);
