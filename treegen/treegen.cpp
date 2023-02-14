@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
 
     NewickTree newickFormatted(tree.getVertices(), tree.getEdges(), 3);
     newickFormatted.printNewick(true);
-    newickFormatted.exportNewick("results/" + to_string(seed) + "/tree.txt", true);
+    newickFormatted.exportNewick("results/" + to_string(seed) +"_tree.txt", true);
     cout << "exported results to " << to_string(seed) << endl;
 
 }
