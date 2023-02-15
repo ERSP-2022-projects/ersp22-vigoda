@@ -38,3 +38,6 @@ documentation/*
 *.suo
 *.opensdf
 *.sdf
+
+#python dependencies
+venv/
