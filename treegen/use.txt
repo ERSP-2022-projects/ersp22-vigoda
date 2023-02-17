@@ -2,10 +2,10 @@ to use:
     make treegen
     ./treegen.out [params]
 params are: 
-    seed=longlong 
-    species=int 
-    seqlen=int 
-    p_mutate=double
-    mutation_model=str
+    seed=longlong
+    ntax/species/n/leaves=int
+    nchar/seqlen/N=int
+    p_mutate/p=double
+    mutation_model/smm=str
 
 note: mrbayes stores newick format in [data].nex.trprobs

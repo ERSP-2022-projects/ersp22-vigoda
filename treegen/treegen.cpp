@@ -20,11 +20,11 @@ int main(int argc, char **argv) {
         string after = arg.substr(eq + 1);
         if (param == "seed")
             seed = stoll(after);
-        else if (param == "species" || param == "numspecies")
+        else if (param == "ntax" || param == "species" || param == "numspecies" || param == "leaves" || param == "n")
             species = stoi(after);
-        else if (param == "seqlen")
+        else if (param == "nchar" || param == "seqlen" || param == "length" || param == "N")
             seqlen = stoi(after);
-        else if (param == "p_mutate")
+        else if (param == "p" || param == "p_mutate")
             p_mutate = stod(after);
         else if (param == "smm" || param == "mutation_model")
             smm = stomm(after);
@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
 
     NewickTree newickFormatted(tree.getVertices(), tree.getEdges(), 3);
     newickFormatted.printNewick(true);
-    newickFormatted.exportNewick("results/" + to_string(seed) + "/tree.txt", true);
+    newickFormatted.exportNewick("results/" + to_string(seed) + "_tree.txt", true);
     cout << "exported results to " << to_string(seed) << endl;
 
 }
