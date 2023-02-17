@@ -18,6 +18,12 @@ newicktest: newicktest.cpp NewickTree.o
 tree.o: tree.h tree.cpp
 	g++ --std=c++17 -c tree.cpp
 
+EigenTest: EigenTest.cpp
+	g++ --std=c++11 -I /opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 EigenTest.cpp -o EigenTest.out
+
+debugGenerateMixture: generateMixture.cpp NewickTree.o
+	g++ --std=c++17 -g generateMixture.cpp NewickTree.o -o debugGenerateMixture.out
+
 clean: 
 	rm -f *.o
 	rm -f *.out

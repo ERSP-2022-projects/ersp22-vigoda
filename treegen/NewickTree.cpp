@@ -11,6 +11,39 @@
 #include <stdexcept>
 using namespace std;
 
+double NewickTree::TreeNode::randomBranchLength()
+{
+    // generate random branch length subject to alpha and beta set for given tree
+    return 0.42;
+}
+
+NewickTree::TreeNode *NewickTree::TreeNode::addChild(string n)
+{
+    // generate random branch length from gamma distribution
+    double bl = randomBranchLength();
+    return addChild(n, bl);
+}
+
+NewickTree::TreeNode *NewickTree::TreeNode::addChild(string n, double bl)
+{
+    TreeNode *newNode = new TreeNode(n, this);
+    children.push_back(TreeBranch(newNode, bl));
+    return newNode;
+}
+
+NewickTree::TreeNode *NewickTree::TreeNode::addChild(TreeNode *child)
+{
+    // generate random branch length from gamma distribution
+    double bl = randomBranchLength();
+    return addChild(child, bl);
+}
+
+NewickTree::TreeNode *NewickTree::TreeNode::addChild(TreeNode *child, double bl)
+{
+    children.push_back(TreeBranch(child, bl));
+    return child;
+}
+
 NewickTree::NewickTree()
 {
     root = nullptr;
@@ -103,9 +136,9 @@ void NewickTree::deleteDFS(NewickTree::TreeNode *start)
     {
         return;
     }
-    for (NewickTree::TreeNode *child : start->children)
+    for (TreeBranch childBranch : start->children)
     {
-        deleteDFS(child);
+        deleteDFS(childBranch.to);
     }
     delete start;
 }
@@ -121,7 +154,7 @@ void NewickTree::newickDFS(NewickTree::TreeNode *start, vector<string> &symbols,
         symbols.push_back("(");
         for (int i = 0; i < start->childrenCount(); i++)
         {
-            NewickTree::TreeNode *child = start->children[i];
+            TreeNode *child = start->children[i].to;
             if (i > 0)
             {
                 symbols.push_back(",");
@@ -183,7 +216,7 @@ NewickTree::TreeNode *NewickTree::importDFS(TreeNode *parent, string &newickStri
     // if (parent != nullptr)
     //     cout << "creating " << currName << " under " << parent->name << endl;
     pos = nextEnd;
-    if (newickString.at(nextEnd) == ')' || parent == nullptr && pos < newickString.size())
+    if (newickString.at(nextEnd) == ')')
     {
         while (newickString.at(pos) != '(')
         {
@@ -227,9 +260,9 @@ int NewickTree::getLeafCount()
         {
             leafCount++;
         }
-        for (TreeNode *child : currNode->children)
+        for (TreeBranch childBranch : currNode->children)
         {
-            next.push(child);
+            next.push(childBranch.to);
         }
     }
     return leafCount;
@@ -283,8 +316,9 @@ void NewickTree::generateSequences(int sequenceLength)
     {
         TreeNode *currNode = next.front();
         next.pop();
-        for (TreeNode *child : currNode->children)
+        for (TreeBranch childBranch : currNode->children)
         {
+            TreeNode *child = childBranch.to;
             string childSeq = "";
             for (int i = 0; i < currNode->sequence.size(); i++)
             {
@@ -379,9 +413,9 @@ map<string, string> NewickTree::getSequences()
         {
             sequences[currNode->name] = currNode->sequence;
         }
-        for (TreeNode *child : currNode->children)
+        for (TreeBranch childBranch : currNode->children)
         {
-            next.push(child);
+            next.push(childBranch.to);
         }
     }
     return sequences;

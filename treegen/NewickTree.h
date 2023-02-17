@@ -10,25 +10,30 @@ using namespace std;
 
 class NewickTree
 {
+
+public:
+    struct TreeNode;
+    struct TreeBranch
+    {
+        double length;
+        TreeNode *to;
+        TreeBranch() {}
+        TreeBranch(TreeNode *t, double l) : to(t), length(l) {}
+    };
     struct TreeNode
     {
+
         string name;
         string sequence;
         TreeNode *parent;
-        vector<TreeNode *> children;
-        TreeNode() : name(""), sequence(""), parent(nullptr), children(vector<TreeNode *>(0)) {}
-        TreeNode(string n, TreeNode *p) : name(n), sequence(""), parent(p), children(vector<TreeNode *>(0)) {}
-        TreeNode *addChild(string n)
-        {
-            TreeNode *newNode = new TreeNode(n, this);
-            children.push_back(newNode);
-            return newNode;
-        }
-        TreeNode *addChild(TreeNode *child)
-        {
-            children.push_back(child);
-            return child;
-        }
+        vector<TreeBranch> children;
+        TreeNode() : name(""), sequence(""), parent(nullptr), children(vector<TreeBranch>(0)) {}
+        TreeNode(string n, TreeNode *p) : name(n), sequence(""), parent(p), children(vector<TreeBranch>(0)) {}
+        TreeNode *addChild(string n);
+        TreeNode *addChild(string n, double bl);
+        TreeNode *addChild(TreeNode *child);
+        TreeNode *addChild(TreeNode *child, double bl);
+        double randomBranchLength();
         int childrenCount()
         {
             return children.size();
@@ -38,19 +43,6 @@ class NewickTree
             return (children.size() == 0);
         }
     };
-
-private:
-    static int createdCount;
-    int sequenceLength;
-    TreeNode *root;
-    map<char, map<char, double>> transitionMatrix;
-    inline static vector<char> symbols = {'A', 'T', 'G', 'C'};
-    void adjToTree(vector<vector<int>> adj, vector<string> names, int rootIndex);
-    void newickDFS(TreeNode *start, vector<string> &symbols, bool leafOnly);
-    void deleteDFS(TreeNode *start);
-    TreeNode *importDFS(TreeNode *parent, string &newickString, int &pos);
-
-public:
     /**
      * Constructs an empty tree with a null 'root'
      */
@@ -161,6 +153,17 @@ public:
      * @param weights The index-aligned weight associated with each tree in 'trees'. Must sum up to 1. (Equally divided by default).
      */
     static map<string, string> mixtureModel(vector<NewickTree *> trees, vector<double> weights);
+
+private:
+    static int createdCount;
+    int sequenceLength;
+    TreeNode *root;
+    map<char, map<char, double>> transitionMatrix;
+    inline static vector<char> symbols = {'A', 'T', 'G', 'C'};
+    void adjToTree(vector<vector<int>> adj, vector<string> names, int rootIndex);
+    void newickDFS(TreeNode *start, vector<string> &symbols, bool leafOnly);
+    void deleteDFS(TreeNode *start);
+    TreeNode *importDFS(TreeNode *parent, string &newickString, int &pos);
 };
 
 #endif
