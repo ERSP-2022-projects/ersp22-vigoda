@@ -7,10 +7,10 @@ treegen: treegen.cpp tree.o NewickTree.o
 	mkdir -p results
 
 NewickTree.o: NewickTree.cpp NewickTree.h
-	g++ --std=c++17 -c NewickTree.cpp 
+	g++ --std=c++17 -c -I /opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 NewickTree.cpp 
 
 generateMixture: generateMixture.cpp NewickTree.o
-	g++ --std=c++17 generateMixture.cpp NewickTree.o -o generateMixture.out
+	g++ --std=c++17 -I /opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 generateMixture.cpp NewickTree.o -o generateMixture.out
 
 newicktest: newicktest.cpp NewickTree.o
 	g++ --std=c++17 newicktest.cpp NewickTree.o -o newicktest
