@@ -27,4 +27,3 @@ debugGenerateMixture: generateMixture.cpp NewickTree.o
 clean: 
 	rm -f *.o
 	rm -f *.out
-	rm -r results/*
