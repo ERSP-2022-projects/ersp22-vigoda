@@ -1,6 +1,6 @@
 default: main
 
-main: treegen
+main: treegen generateMixture
 
 treegen: treegen.cpp tree.o NewickTree.o
 	g++ --std=c++17 treegen.cpp tree.o NewickTree.o -o treegen.out

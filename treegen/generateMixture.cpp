@@ -4,8 +4,13 @@
 #include <random>
 using namespace std;
 
-int main()
+int main(int argc, char* argv[])
 {
+    if (argc != 3) {
+        cout << "Usage: " << argv[0] << " <tree1 file> <tree2 file>" << endl;
+        return 1;
+    }
+
     random_device rd;
     srand(rd());
     int orig = rand() % static_cast<int>(1e6);
@@ -15,8 +20,8 @@ int main()
     // NewickTree tree2 = NewickTree(numLeafs);
     NewickTree tree1;
     NewickTree tree2;
-    tree1.importNewick("tree1.txt");
-    tree2.importNewick("tree2.txt");
+    tree1.importNewick(argv[1]);
+    tree2.importNewick(argv[2]);
     tree1.generateSequences(sequenceLength);
     tree2.generateSequences(sequenceLength);
     filesystem::create_directory("results/" + to_string(orig));
