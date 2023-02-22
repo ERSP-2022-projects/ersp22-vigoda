@@ -41,3 +41,4 @@ documentation/*
 
 #python dependencies
 venv/
+treegen/results

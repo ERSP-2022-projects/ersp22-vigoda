@@ -5,8 +5,8 @@ using namespace std;
 int main(int argc, char **argv) {
     // initializations + cmd line reading
     uint64_t seed = (time(0) % 100000); // default seed = time % 1M
-    int species = 10;                   // default # species = 10
-    int seqlen = 1000;                  // default sequence length = 1000
+    int species = 20;                   // default # species = 10
+    int seqlen = 10000;                  // default sequence length = 1000
     double p_mutate = 0.2;              // default mutation probability = 0.2
     mutation_model smm = jc69;          // default site mutation model = jc69
     for (int i = 1; i < argc; i++) {

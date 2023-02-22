@@ -1,4 +1,4 @@
-default: main
+default: treegen
 
 main: treegen generateMixture
 
@@ -22,7 +22,7 @@ clean:
 	rm -f *.o
 	rm -f *.out
 
-clean_results: clean
+clean_results:
 	clean
 	rm -r results/*
 clean_all: clean clean_results
