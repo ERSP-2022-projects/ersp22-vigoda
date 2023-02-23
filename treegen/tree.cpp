@@ -5,11 +5,11 @@ using namespace std;
 
 void Tree::generateTopology() {
     uint64_t seed = init(orig + 1);
-    vertices[0] = Vertex(SPECIES_NAMES[0]);
-    vertices[1] = Vertex(SPECIES_NAMES[1]);
+    vertices[0] = Vertex(to_string(0));
+    vertices[1] = Vertex(to_string(1));
     edges[0] = Edge(0, 1);
     for (int i = 2; i < species; i++) {
-        vertices[2 * i - 2] = Vertex(SPECIES_NAMES[i]);
+        vertices[2 * i - 2] = Vertex(to_string(i));
         vertices[2 * i - 1] = Vertex();
         edges[2 * i - 3] = Edge(2 * i - 2, 2 * i - 1);
         int e = nextInt(&seed, 2 * i - 4);
