@@ -5,7 +5,6 @@
 #include <vector>
 using namespace std;
 
-
 struct Vertex {
     bool isLeaf;
     string name;
