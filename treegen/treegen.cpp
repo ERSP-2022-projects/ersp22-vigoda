@@ -1,5 +1,4 @@
 #include "tree.h"
-#include "NewickTree.h"
 using namespace std;
 
 int main(int argc, char **argv) {
@@ -37,9 +36,8 @@ int main(int argc, char **argv) {
     tree.dfsSequenceGen();
     tree.writeToNexus();
 
-    NewickTree newickFormatted(tree.getVertices(), tree.getEdges(), 3);
-    newickFormatted.printNewick(true);
-    newickFormatted.exportNewick("results/" + to_string(seed) + "_tree.txt", true);
-    cout << "exported results to " << to_string(seed) << endl;
+    cout << tree.toNewick() << endl;
+    cout << "exported results for " << to_string(seed) << endl;
 
+    return 0;
 }

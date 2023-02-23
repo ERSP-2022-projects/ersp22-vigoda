@@ -1,6 +1,5 @@
 #include "tree.h"
 #include <fstream>
-#include <filesystem>
 #include <stack>
 using namespace std;
 
@@ -19,25 +18,6 @@ void Tree::generateTopology() {
     }
 }
 
-void Tree::logTreeTxt() {
-    ofstream file;
-    file.open("results/tree_" + to_string(orig) + ".txt");
-    for (int i = 0; i < 2 * species - 3; i++) {
-        Edge e = edges[i];
-        if ((vertices[e.v1].isLeaf))
-            file << vertices[e.v1].name;
-        else
-            file << e.v1;
-        file << ", ";
-        if ((vertices[e.v2].isLeaf))
-            file << vertices[e.v2].name;
-        else
-            file << e.v2;
-        file << endl;
-    }
-    file.close();
-}
-
 void Tree::dfsSequenceGen() {
     uint64_t seed = init(orig + 2);
     stack<int> s;
@@ -45,8 +25,7 @@ void Tree::dfsSequenceGen() {
     for (int i = 0; i < 2 * species - 2; i++)
         visited[i] = false;
     s.push(0); // starting node doesn't matter
-    for (int i = 0; i < seqlen; i++)
-        sequences[0][i] = nextInt(&seed, 4); // randomize 1st node
+    for (int i = 0; i < seqlen; i++) sequences[0][i] = nextInt(&seed, 4); // randomize 1st node
     while (!s.empty()) {
         int id = s.top();
         visited[id] = true;
@@ -78,14 +57,40 @@ void Tree::writeToNexus() {
     file << "format datatype=dna interleave=no gap=-;" << endl;
     file << "matrix" << endl;
     for (int v = 0; v < 2 * species - 2; v++) {
-        if (!vertices[v].isLeaf)
-            continue;
+        if (!vertices[v].isLeaf) continue;
         file << vertices[v].name << "\t";
-        for (int i = 0; i < seqlen; i++)
-            file << convert_nucleotide(sequences[v][i]);
+        for (int i = 0; i < seqlen; i++) file << convert_nucleotide(sequences[v][i]);
         file << endl;
     }
     file << ";" << endl;
     file << "end;" << endl;
     file.close();
+}
+
+string Tree::toNewick() {
+    string newick = "";
+    bool visited[2 * species - 2];
+    for (int i = 0; i < 2 * species - 2; i++) visited[i] = false;
+    recursiveNewick(newick, 3, visited);
+    return newick;
+}
+
+void Tree::recursiveNewick(string& newick, int id, bool* visited) {
+        visited[id] = true;
+        if (vertices[id].isLeaf) {
+            newick += vertices[id].name;
+        }
+        else {
+            newick += "(";
+            bool first = false;
+            for (int i = 0; i < 2 * species - 3; i++) {
+                int v = edges[i].has(id);
+                if (v != -1 && !visited[v]) {
+                    if (first) newick += ",";
+                    else first = true;
+                    recursiveNewick(newick, v, visited);
+                }
+            }
+            newick += ")";
+        }
 }
