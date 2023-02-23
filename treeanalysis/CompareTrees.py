@@ -4,6 +4,10 @@ import re
 from ete3 import Tree
 
 
+def validate(trprobsfilePath, txtFilePath):
+    mcmcTree = displayAndReturnTree(trprobsfilePath,display= False)
+    trueTree =  
+
 def generateNewickTree(nleafs):
     return treeToNewick(generate_random_tree(nleafs))
 

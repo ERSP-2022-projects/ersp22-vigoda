@@ -1,6 +1,6 @@
 default: treegen
 
-main: treegen generateMixture
+all: treegen generateMixture
 
 treegen: treegen.cpp tree.o NewickTree.o
 	g++ --std=c++17 -g treegen.cpp tree.o NewickTree.o -o treegen.out
@@ -26,5 +26,7 @@ clean_results:
 	clean
 	rm -r results/*
 clean_all: clean clean_results
-debug: 
+debug_treegen: 
+	gdb treegen.out
+debug_mixture: 
 	gdb generateMixture.out

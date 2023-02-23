@@ -5,8 +5,6 @@
 #include <vector>
 using namespace std;
 
-static const string SPECIES_NAMES[26] = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"};
-
 struct Vertex {
     bool isLeaf;
     string name;
