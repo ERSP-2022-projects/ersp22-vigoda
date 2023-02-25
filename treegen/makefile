@@ -23,7 +23,6 @@ clean:
 	rm -f *.out
 
 clean_results:
-	clean
 	rm -r results/*
 clean_all: clean clean_results
 debug_treegen: 
