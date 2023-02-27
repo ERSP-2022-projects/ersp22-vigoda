@@ -3,7 +3,7 @@ import subprocess
 import shutil
 
 
-def generate_mrbayes_script(nexus_filepath, output_filepath=None):
+def generate_mrbayes_script(nexus_filepath, output_filepath=None, same_directory=True):
     TEMPLATE_PATH = r"C:\Users\yasha\Github\ersp22-vigoda\treeanalysis\mrbayes_template.nexus"
     temp_path = os.path.normpath(TEMPLATE_PATH)
 
@@ -24,38 +24,6 @@ def generate_mrbayes_script(nexus_filepath, output_filepath=None):
     return output_filepath
 
 
-def NexusToRun(nexus_filepath, script_filepath=None):
-    if script_filepath == None:
-        script_filepath = generate_mrbayes_script(nexus_filepath)
-
-    input_filename = os.path.basename(nexus_filepath)
-    mrbayes_filename = os.path.basename(script_filepath)
-    # Extract the name before the underscore as the directory name
-    dir_name = input_filename.split("_")[0]
-
-    # Create the directory inside the analysis folder
-    analysis_dir = os.path.join(
-        "C:/Users/yasha/Github/ersp22-vigoda/treeanalysis/analysis", dir_name)
-    os.makedirs(analysis_dir, exist_ok=True)
-
-    if not os.path.exists(os.path.join(analysis_dir, input_filename)):
-        shutil.move(nexus_filepath, os.path.join(analysis_dir, input_filename))
-        nexus_filepath = os.path.join(analysis_dir, input_filename)
-    else:
-        print(f"{input_filename} has already been moved to {analysis_dir}")
-
-    if not os.path.exists(os.path.join(analysis_dir, mrbayes_filename)):
-        shutil.move(script_filepath, os.path.join(
-            analysis_dir, mrbayes_filename))
-        script_filepath = os.path.join(analysis_dir, mrbayes_filename)
-
-    else:
-        print(f"{mrbayes_filename} has already been moved to {analysis_dir}")
-
-    output, error = run_mrbayes(script_filepath)
-    return (output, error)
-
-
 def run_mrbayes(script_filepath, directory=None):
     if directory == None:
         directory = os.path.dirname(script_filepath)
@@ -66,6 +34,44 @@ def run_mrbayes(script_filepath, directory=None):
 
     os.chdir(old_path)
     return (process.stdout, process.stderr)
+
+
+def NexusToRun(nexus_filepath, script_filepath=None):
+    nexus_filepath = os.path.normpath(nexus_filepath)
+
+    if script_filepath == None:
+        script_filepath = generate_mrbayes_script(nexus_filepath)
+    script_filepath = os.path.normpath(script_filepath)
+
+    output, error = run_mrbayes(script_filepath)
+
+    input_filename = os.path.basename(nexus_filepath)
+    prefix = input_filename.split("_")[0]
+
+    # Create the directory inside the analysis folder
+    analysis_dir = os.path.join(
+        "C:/Users/yasha/Github/ersp22-vigoda/treeanalysis/analysis", prefix)
+    os.makedirs(analysis_dir, exist_ok=True)
+
+    src_dir = os.path.dirname(nexus_filepath)
+    dest_dir = analysis_dir
+
+    # Iterate over all files in the source directory
+    for file_name in os.listdir(src_dir):
+        # Check if the file starts with the prefix "input_filename"
+        if file_name.startswith(prefix):
+            # If the file starts with the prefix, construct the source and destination file paths
+            src_path = os.path.join(src_dir, file_name)
+            dest_path = os.path.join(dest_dir, file_name)
+            # Check if the file already exists in the destination directory
+            if os.path.exists(dest_path):
+                print(
+                    f"File '{file_name}' already exists in the destination directory, skipping...")
+            else:
+                # If the file does not exist in the destination directory, move it there
+                shutil.move(src_path, dest_path)
+
+    return (output, error)
 
 
 def treegen(species=10, seqlen=1000, p_mutate=0.2, mutation_model="jc69", seed=None):
@@ -92,4 +98,4 @@ def treegen(species=10, seqlen=1000, p_mutate=0.2, mutation_model="jc69", seed=N
 
 if __name__ == "__main__":
     path = "C:\\Users\\yasha\\Github\\ersp22-vigoda\\treegen\\results\\44350_data.nex"
-    run_mrbayes(path)
+    print(NexusToRun(path))
