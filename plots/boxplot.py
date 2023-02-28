@@ -20,7 +20,7 @@ palette = ['r', 'g', 'b', 'y'] # 4 colors, add as needed
 for i in range(len(xvals)):
     plt.scatter(i+1, np.mean(data[i]), color='k') # show mean as black dot
     for y in data[i]:
-        x = i + 1;
+        x = i + 1
         x += np.random.normal(0,0.04) # optional: add a bit of horizontal scatter
         plt.scatter(x, y, alpha=0.4, color=palette[i])
 
