@@ -1,15 +1,12 @@
 #Nexus
 begin mrbayes;
     execute <input_filename>;
-    lset nst=6 rates=gamma;
-    mcmc ngen=50000 samplefreq=100 nchains=1 nruns=2 printfreq=1000 stoprule=yes stopval=0.001;
-    sumt burnin=250;
-    sump burnin=250;
-    sumt relburnin=yes;
-    sump relburnin=yes;
-    sump standarddeviation=yes;
+    lset nst=<nst> rates=<rates>;
+    mcmc ngen=<ngen> samplefreq=<samplefreq> nchains=<nchains> nruns=<nruns> printfreq=<printfreq> diagnfreq=<diagnfreq>;
+    sumt burnin=<burnin> relburnin=yes;
+    sump burnin=<burnin> relburnin=yes standarddeviation=yes;
     log likelihood;
-    log <diagnostic_information>;
+    log <log_filename>;
     set autoclose=yes nowarn=yes;
     quit;
 end;
