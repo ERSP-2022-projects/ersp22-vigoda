@@ -3,9 +3,10 @@ import subprocess
 import shutil
 import re
 import numpy as np
+import time
 
 
-def extract_data_from_directory(target_directory, output_filename="results"):
+def extract_data_from_directory(target_directory, output_filename="_results.csv"):
     # create an empty list to store the data
     data_list = []
 
@@ -21,9 +22,15 @@ def extract_data_from_directory(target_directory, output_filename="results"):
     # convert the data_list to a numpy array
     data_array = np.array(data_list)
 
-    # write the data_array to a file in the target_directory
+    # append the .csv extension to the output filename if it's not already present
+    if not output_filename.endswith('.csv'):
+        output_filename += '.csv'
+
+    # write the data_array to a CSV file in the target_directory
     output_file_path = os.path.join(target_directory, output_filename)
-    np.savetxt(output_file_path, data_array)
+    header = "prefix,generation number,ASDSF"
+    np.savetxt(output_file_path, data_array,
+               delimiter=',', fmt='%s', header=header)
 
     # return the data_array
     return data_array
@@ -87,7 +94,7 @@ def treegen(species=10, seqlen=1000, p_mutate=0.2,
 
 
 def generate_mrbayes_script(nexus_filepath, target_directory=None,
-                            output_filepath=None, ngen=50000,
+                            output_filepath=None, ngen=5000,
                             samplefreq=100, nchains=1, nruns=2,
                             printfreq=100, diagnfreq=100,
                             stopval=0.00001, burnin=250, nst=6,
@@ -213,19 +220,34 @@ def generateAndRun(**kwargs):
     return dir_path
 
 
-def main(test_dir_name):
-    numSamples = 10
+def CreateAndAnalyze(numSamples, test_dir_name="misc", **kwargs):
     analysis_directory = r"C:\Users\yasha\Github\ersp22-vigoda\treeanalysis\analysis"
     target_directory = os.path.join(analysis_directory, test_dir_name)
     if not os.path.exists(target_directory):
         os.makedirs(target_directory)
         print(f"Created directory: {target_directory}")
+
+    kwargs["target_directory"] = target_directory
+
+    for i in range(numSamples):
+        generateAndRun(**kwargs)
+        print(f"Analyzing sample {i+1}")
+    print(f"Analyzing {numSamples} samples completed")
+    return target_directory
+
+
+def extract_results(extract_from_directory):
+    extract_from_directory = os.path.normpath(extract_from_directory)
+    table = extract_data_from_directory(extract_from_directory)
+    print(f"{table=}")
+
+
+def seqlen_wrapper(test_dir_name, seqlen, numSamples):
     treegen_params = {
         "species": 20,
-        "seqlen": 10000,
+        "seqlen": seqlen,
     }
     mrbayes_params = {
-        "target_directory": target_directory,
         "ngen": 5000,
         "samplefreq": 100,
         "printfreq": 100,
@@ -233,20 +255,23 @@ def main(test_dir_name):
         "stopval": 0.0001
     }
     all_params = {**treegen_params, **mrbayes_params}
-    for _ in range(numSamples):
-        generateAndRun(**all_params)
-    print(f"Analyzing {numSamples} samples completed")
-    return target_directory
+    test_directory = CreateAndAnalyze(
+        test_dir_name=test_dir_name, numSamples=numSamples, **all_params)
+    time.sleep(60)
+    print(f"Extracting Results in {test_dir_name}")
+    print(extract_results(test_directory))
 
 
-def main2(extract_from_directory):
-    table = extract_data_from_directory(extract_from_directory)
-    print(f"{table=}")
+def main():
+    seqlen_wrapper("nCharsMixingTime-1000", seqlen=5000, numSamples=40)
+    seqlen_wrapper("nCharsMixingTime-3000", seqlen=5000, numSamples=40)
+    seqlen_wrapper("nCharsMixingTime-5000", seqlen=5000, numSamples=40)
+    seqlen_wrapper("nCharsMixingTime-7000", seqlen=5000, numSamples=40)
+    seqlen_wrapper("nCharsMixingTime-9000", seqlen=5000, numSamples=40)
+    seqlen_wrapper("nCharsMixingTime-10000", seqlen=5000, numSamples=40)
+
+    print("Program completed")
 
 
 if __name__ == "__main__":
-    # main("ncharsMixingTime,stopval=0.0001")
-    test_dir_name = "nCharsMixingTime,stopval=0.0001"
-    test_directory = main(test_dir_name)
-
-    main2(test_directory)
+    main()
