@@ -1,17 +1,108 @@
 import os
 import subprocess
 import shutil
+import re
+import numpy as np
 
 
-def generate_mrbayes_script(nexus_filepath, output_filepath=None, ngen=50000, samplefreq=100, nchains=1, nruns=2, printfreq=1000, diagnfreq=1000, burnin=250, nst=6, rates="gamma", addToNexusFile=True):
+def extract_data_from_directory(target_directory, output_filename="results"):
+    # create an empty list to store the data
+    data_list = []
+
+    # loop over all files in the specified directory
+    for file_name in os.listdir(target_directory):
+        if file_name.endswith('.mcmc'):
+            file_path = os.path.join(target_directory, file_name)
+
+            # extract the relevant data and add it to the data_list
+            prefix, gen_num, std_dev = extract_data(file_path)
+            data_list.append([prefix, gen_num, std_dev])
+
+    # convert the data_list to a numpy array
+    data_array = np.array(data_list)
+
+    # write the data_array to a file in the target_directory
+    output_file_path = os.path.join(target_directory, output_filename)
+    np.savetxt(output_file_path, data_array)
+
+    # return the data_array
+    return data_array
+
+
+def extract_data(file_path):
+    # extract the prefix number tag from the file name
+    file_path = os.path.normpath(file_path)
+    prefix = re.findall(r'^(\d+)_', os.path.basename(file_path))[0]
+
+    # open the file and read its contents
+    with open(file_path, 'r') as f:
+        contents = f.read()
+
+    # find the last row of the table
+    last_row = contents.split('\n')[-2]
+
+    # extract the generation number and StdDev value
+    gen_num = last_row.split('\t')[0]
+    std_dev = last_row.split('\t')[-1]
+
+    return (prefix, gen_num, std_dev)
+
+
+def treegen(species=10, seqlen=1000, p_mutate=0.2,
+            mutation_model="jc69", seed=None):
+    # set the path to the C++ executable and the command-line arguments
+    executable_path = r"./treegen.out"
+    treegen_directory = r"C:/Users/yasha/Github/ersp22-vigoda/treegen"
+    results_directory = r"C:/Users/yasha/Github/ersp22-vigoda/treegen/results"
+    old_directory = os.getcwd()
+    # set the working directory to the location of the C++ executable
+    os.chdir(treegen_directory)
+    new_directory = os.getcwd()
+    # run the C++ executable with the specified arguments
+    command = [executable_path, f"species={species}",
+               f"seqlen={seqlen}", f"p_mutate={p_mutate}",
+               f"mutation_model={mutation_model}"]
+    if seed is not None:
+        command.append(f"seed={seed}")
+
+    command_string = ' '.join(map(str, command))
+    process = subprocess.run(
+        command, cwd=r"C:/Users/yasha/Github/ersp22-vigoda/treegen", capture_output=True, check=True)
+    stdout = (process.stdout).decode()
+    stderr = (process.stderr).decode()
+    # stdout = process.stdout
+    # stderr = process.stderr
+    # get the prefix of the newly created NEXUS file
+    prefix = (stdout).split('\n')[-2].split()[-1]
+
+    # change the working directory back to the original location
+    os.chdir(old_directory)
+
+    for filename in os.listdir(results_directory):
+        if filename.startswith(prefix) and filename.endswith('.nex'):
+            return os.path.join(results_directory, filename)
+
+    raise FileNotFoundError(
+        f"The file with prefix: '{prefix}' does not exist in results directory")
+
+
+def generate_mrbayes_script(nexus_filepath, target_directory=None,
+                            output_filepath=None, ngen=50000,
+                            samplefreq=100, nchains=1, nruns=2,
+                            printfreq=100, diagnfreq=100,
+                            stopval=0.00001, burnin=250, nst=6,
+                            rates="gamma", addToNexusFile=True):
     input_filename = os.path.basename(nexus_filepath)
     prefix = input_filename.split("_")[0]
 
     # Create the directory inside the analysis folder
-    analysis_dir = os.path.join(
-        "C:/Users/yasha/Github/ersp22-vigoda/treeanalysis/analysis", prefix)
+    if target_directory == None:
+        analysis_dir = os.path.normpath(
+            "C:/Users/yasha/Github/ersp22-vigoda/treeanalysis/analysis/misc")
+    else:
+        analysis_dir = target_directory
+    analysis_dir = os.path.normpath(analysis_dir)
     os.makedirs(analysis_dir, exist_ok=True)
-
     src_dir = os.path.dirname(nexus_filepath)
     dest_dir = analysis_dir
     for file_name in os.listdir(src_dir):
@@ -55,6 +146,7 @@ def generate_mrbayes_script(nexus_filepath, output_filepath=None, ngen=50000, sa
     script = script.replace("<printfreq>", str(printfreq))
     script = script.replace("<diagnfreq>", str(diagnfreq))
     script = script.replace("<burnin>", str(burnin))
+    script = script.replace("<stopval>", str(stopval))
     script = script.replace("<nst>", str(nst))
     script = script.replace("<rates>", str(rates))
 
@@ -70,76 +162,91 @@ def generate_mrbayes_script(nexus_filepath, output_filepath=None, ngen=50000, sa
 
 
 def run_mrbayes(script_filepath, directory=None):
+    script_filepath = os.path.normpath(script_filepath)
     if directory == None:
         directory = os.path.dirname(script_filepath)
-    old_path = os.getcwd()
-    os.chdir(directory)
+
+    short_filepath = os.path.basename(script_filepath)
+    if (len(script_filepath) >= 99):
+        script_filepath = short_filepath
+
     command = ["mb", script_filepath]
-    process = subprocess.run(command, capture_output=True, text=True)
+    process = subprocess.run(
+        command, cwd=directory, capture_output=True)
 
-    os.chdir(old_path)
-    return (process.stdout, process.stderr)
-
-
-def treegen(species=10, seqlen=1000, p_mutate=0.2, mutation_model="jc69", seed=None):
-    # set the path to the C++ executable and the command-line arguments
-    executable_path = "./treegen.out"
-    treegen_directory = "C:/Users/yasha/Github/ersp22-vigoda/treegen"
-    results_directory = "C:/Users/yasha/Github/ersp22-vigoda/treegen/results"
-    old_directory = os.getcwd()
-    # set the working directory to the location of the C++ executable
-    os.chdir(treegen_directory)
-
-    # run the C++ executable with the specified arguments
-    command = [executable_path, f"species={species}",
-               f"seqlen={seqlen}", f"p_mutate={p_mutate}",
-               f"mutation_model={mutation_model}"]
-    if seed is not None:
-        command.append(f"seed={seed}")
-    process = subprocess.run(["./treegen.out"], capture_output=True, text=True)
-
-    # get the prefix of the newly created NEXUS file
-    prefix = (process.stdout).split('\n')[-2].split()[-1]
-
-    # change the working directory back to the original location
-    os.chdir(old_directory)
-
-    for filename in os.listdir(results_directory):
-        if filename.startswith(prefix) and filename.endswith('.nex'):
-            return os.path.join(results_directory, filename)
-
-    raise FileNotFoundError(
-        f"The file with prefix: '{prefix}' does not exist in results directory")
+    return (process.stdout, process.stderr, directory)
 
 
 def generateAndRun(**kwargs):
-    treegen_params = {
-        'species': kwargs['species'],
-        'seqlen': kwargs['seqlen'],
-        'p_mutate': kwargs['p_mutate'],
-        'mutation_model': kwargs['mutation_model'],
-        'seed': kwargs['seed'],
-    }
-    nexus_filepath = treegen(**treegen_params)
+    nexus_filepath = kwargs.get('nexus_filepath', None)
+    if nexus_filepath == None:
+        treegen_params = {
+            'species': kwargs.get('species', None),
+            'seqlen': kwargs.get('seqlen', None),
+            'p_mutate': kwargs.get('p_mutate', None),
+            'mutation_model': kwargs.get('mutation_model', None),
+            'seed': kwargs.get('seed', None),
+        }
+        nexus_filepath = treegen(
+            **{k: v for k, v in treegen_params.items() if v is not None})
+
     generate_mrbayes_script_params = {
         'nexus_filepath': nexus_filepath,
-        'ngen': kwargs['ngen'],
-        'samplefreq': kwargs['samplefreq'],
-        'nchains': kwargs['nchains'],
-        'nruns': kwargs['nruns'],
-        'printfreq': kwargs['printfreq'],
-        'diagnfreq': kwargs['diagnfreq'],
-        'burnin': kwargs['burnin'],
-        'nst': kwargs['nst'],
-        'rates': kwargs['rates'],
-        'addToNexusFile': kwargs['addToNexusFile'],
+        'output_filepath': kwargs.get('output_filepath', None),
+        'target_directory': kwargs.get('target_directory', None),
+        'ngen': kwargs.get('ngen', None),
+        'samplefreq': kwargs.get('samplefreq', None),
+        'stopval': kwargs.get('stopval', None),
+        'nchains': kwargs.get('nchains', None),
+        'nruns': kwargs.get('nruns', None),
+        'printfreq': kwargs.get('printfreq', None),
+        'diagnfreq': kwargs.get('diagnfreq', None),
+        'burnin': kwargs.get('burnin', None),
+        'nst': kwargs.get('nst', None),
+        'rates': kwargs.get('rates', None),
+        'addToNexusFile': kwargs.get('addToNexusFile', None),
     }
 
-    script_filepath = generate_mrbayes_script(**generate_mrbayes_script_params)
-    return run_mrbayes(script_filepath)
+    script_filepath = generate_mrbayes_script(
+        **{k: v for k, v in generate_mrbayes_script_params.items() if v is not None})
+    output, error, dir_path = run_mrbayes(script_filepath)
+    return dir_path
+
+
+def main(test_dir_name):
+    numSamples = 10
+    analysis_directory = r"C:\Users\yasha\Github\ersp22-vigoda\treeanalysis\analysis"
+    target_directory = os.path.join(analysis_directory, test_dir_name)
+    if not os.path.exists(target_directory):
+        os.makedirs(target_directory)
+        print(f"Created directory: {target_directory}")
+    treegen_params = {
+        "species": 20,
+        "seqlen": 10000,
+    }
+    mrbayes_params = {
+        "target_directory": target_directory,
+        "ngen": 5000,
+        "samplefreq": 100,
+        "printfreq": 100,
+        "diagnfreq": 100,
+        "stopval": 0.0001
+    }
+    all_params = {**treegen_params, **mrbayes_params}
+    for _ in range(numSamples):
+        generateAndRun(**all_params)
+    print(f"Analyzing {numSamples} samples completed")
+    return target_directory
+
+
+def main2(extract_from_directory):
+    table = extract_data_from_directory(extract_from_directory)
+    print(f"{table=}")
 
 
 if __name__ == "__main__":
-    # path = "C:\\Users\\yasha\\Github\\ersp22-vigoda\\treegen\\results\\45299_data.nex"
-    # print(NexusToRun(path))
-    print(generateAndRun())
+    # main("ncharsMixingTime,stopval=0.0001")
+    test_dir_name = "nCharsMixingTime,stopval=0.0001"
+    test_directory = main(test_dir_name)
+
+    main2(test_directory)
