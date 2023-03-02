@@ -24,6 +24,9 @@ EigenTest: EigenTest.cpp
 debugGenerateMixture: generateMixture.cpp NewickTree.o
 	g++ --std=c++17 -g generateMixture.cpp NewickTree.o -o debugGenerateMixture.out
 
+varyBranchLength: varyBranchLength.cpp NewickTree.o
+	g++ --std=c++17 -O3 -I /opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 varyBranchLength.cpp NewickTree.o -o varyBranchLength.out
+
 clean: 
 	rm -f *.o
 	rm -f *.out

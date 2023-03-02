@@ -117,7 +117,7 @@ NewickTree::NewickTree(int numLeafs) : NewickTree()
     }
     adjToTree(adjList, names, 0);
 }
-TreeNode *NewickTree::getRoot()
+NewickTree::TreeNode *NewickTree::getRoot()
 {
     return root;
 }
