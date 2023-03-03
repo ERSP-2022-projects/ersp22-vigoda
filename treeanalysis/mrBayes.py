@@ -6,55 +6,6 @@ import numpy as np
 import time
 
 
-def extract_data_from_directory(target_directory, output_filename="_results.csv"):
-    # create an empty list to store the data
-    data_list = []
-
-    # loop over all files in the specified directory
-    for file_name in os.listdir(target_directory):
-        if file_name.endswith('.mcmc'):
-            file_path = os.path.join(target_directory, file_name)
-
-            # extract the relevant data and add it to the data_list
-            prefix, gen_num, std_dev = extract_data(file_path)
-            data_list.append([prefix, gen_num, std_dev])
-
-    # convert the data_list to a numpy array
-    data_array = np.array(data_list)
-
-    # append the .csv extension to the output filename if it's not already present
-    if not output_filename.endswith('.csv'):
-        output_filename += '.csv'
-
-    # write the data_array to a CSV file in the target_directory
-    output_file_path = os.path.join(target_directory, output_filename)
-    header = "prefix,generation number,ASDSF"
-    np.savetxt(output_file_path, data_array,
-               delimiter=',', fmt='%s', header=header)
-
-    # return the data_array
-    return data_array
-
-
-def extract_data(file_path):
-    # extract the prefix number tag from the file name
-    file_path = os.path.normpath(file_path)
-    prefix = re.findall(r'^(\d+)_', os.path.basename(file_path))[0]
-
-    # open the file and read its contents
-    with open(file_path, 'r') as f:
-        contents = f.read()
-
-    # find the last row of the table
-    last_row = contents.split('\n')[-2]
-
-    # extract the generation number and StdDev value
-    gen_num = last_row.split('\t')[0]
-    std_dev = last_row.split('\t')[-1]
-
-    return (prefix, gen_num, std_dev)
-
-
 def treegen(species=10, seqlen=1000, p_mutate=0.2,
             mutation_model="jc69", seed=None):
     # set the path to the C++ executable and the command-line arguments
@@ -71,8 +22,6 @@ def treegen(species=10, seqlen=1000, p_mutate=0.2,
                f"mutation_model={mutation_model}"]
     if seed is not None:
         command.append(f"seed={seed}")
-
-    command_string = ' '.join(map(str, command))
     process = subprocess.run(
         command, cwd=r"C:/Users/yasha/Github/ersp22-vigoda/treegen", capture_output=True, check=True)
     stdout = (process.stdout).decode()
@@ -242,6 +191,55 @@ def extract_results(extract_from_directory):
     print(f"{table=}")
 
 
+def extract_data_from_directory(target_directory, output_filename="_results.csv"):
+    # create an empty list to store the data
+    data_list = []
+
+    # loop over all files in the specified directory
+    for file_name in os.listdir(target_directory):
+        if file_name.endswith('.mcmc'):
+            file_path = os.path.join(target_directory, file_name)
+
+            # extract the relevant data and add it to the data_list
+            prefix, gen_num, std_dev = extract_data(file_path)
+            data_list.append([prefix, gen_num, std_dev])
+
+    # convert the data_list to a numpy array
+    data_array = np.array(data_list)
+
+    # append the .csv extension to the output filename if it's not already present
+    if not output_filename.endswith('.csv'):
+        output_filename += '.csv'
+
+    # write the data_array to a CSV file in the target_directory
+    output_file_path = os.path.join(target_directory, output_filename)
+    header = "prefix,generation number,ASDSF"
+    np.savetxt(output_file_path, data_array,
+               delimiter=',', fmt='%s', header=header)
+
+    # return the data_array
+    return data_array
+
+
+def extract_data(file_path):
+    # extract the prefix number tag from the file name
+    file_path = os.path.normpath(file_path)
+    prefix = re.findall(r'^(\d+)_', os.path.basename(file_path))[0]
+
+    # open the file and read its contents
+    with open(file_path, 'r') as f:
+        contents = f.read()
+
+    # find the last row of the table
+    last_row = contents.split('\n')[-2]
+
+    # extract the generation number and StdDev value
+    gen_num = last_row.split('\t')[0]
+    std_dev = last_row.split('\t')[-1]
+
+    return (prefix, gen_num, std_dev)
+
+
 def seqlen_wrapper(test_dir_name, seqlen, numSamples):
     treegen_params = {
         "species": 20,
@@ -261,7 +259,8 @@ def seqlen_wrapper(test_dir_name, seqlen, numSamples):
     print(f"Extracting Results in {test_dir_name}")
     print(extract_results(test_directory))
 
-def species_wrapper(test_dir_name, species,numSamples,seqlen=10000):
+
+def species_wrapper(test_dir_name, species, numSamples, seqlen=10000):
     treegen_params = {
         "species": species,
         "seqlen": seqlen,
@@ -279,7 +278,8 @@ def species_wrapper(test_dir_name, species,numSamples,seqlen=10000):
     time.sleep(60)
     print(f"Extracting Results in {test_dir_name}")
     print(extract_results(test_directory))
-    
+
+
 def main():
     seqlen_wrapper("nCharsMixingTime-90000", seqlen=90000, numSamples=100)
 
@@ -294,8 +294,10 @@ def main():
 #     species_wrapper("nTaxaMixingTime-100",species=100,seqlen=10000,numSamples=100)
 #     species_wrapper("nTaxaMixingTime-120",species=120,seqlen=10000,numSamples=100)
 
+
 def fake_main():
-    seqlen_wrapper("misc",seqlen=1000,numSamples=3)
+    seqlen_wrapper("misc", seqlen=1000, numSamples=3)
+
 
 if __name__ == "__main__":
     main()
