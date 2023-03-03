@@ -41,6 +41,7 @@ documentation/*
 
 #python dependencies
 venv/
+env/    
 treegen/results/
 treeanalysis/analysis/
 !/treeanalysis/analysis/**/*.csv
