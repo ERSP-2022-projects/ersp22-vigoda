@@ -261,17 +261,18 @@ def seqlen_wrapper(test_dir_name, seqlen, numSamples):
     print(f"Extracting Results in {test_dir_name}")
     print(extract_results(test_directory))
 
-def species_wrapper(test_dir_name, species,numSamples,seqlen=10000):
+def species_wrapper(test_dir_name, species,numSamples,seqlen=10000,nchains = 4):
     treegen_params = {
         "species": species,
         "seqlen": seqlen,
     }
     mrbayes_params = {
         "ngen": 50000,
-        "samplefreq": 100,
-        "printfreq": 100,
-        "diagnfreq": 100,
-        "stopval": 0.0001
+        "samplefreq": 10,
+        "printfreq": 10,
+        "diagnfreq": 10,
+        "stopval": 0.0001,
+        "nchains": nchains,
     }
     all_params = {**treegen_params, **mrbayes_params}
     test_directory = CreateAndAnalyze(
@@ -280,22 +281,21 @@ def species_wrapper(test_dir_name, species,numSamples,seqlen=10000):
     print(f"Extracting Results in {test_dir_name}")
     print(extract_results(test_directory))
     
-def main():
-    seqlen_wrapper("nCharsMixingTime-90000", seqlen=90000, numSamples=100)
-
-    print("Program completed")
-
 # def main():
-#     species_wrapper("nTaxaMixingTime-10",species=10,seqlen=10000,numSamples=100)
-#     species_wrapper("nTaxaMixingTime-30",species=30,seqlen=10000,numSamples=100)
-#     species_wrapper("nTaxaMixingTime-50",species=50,seqlen=10000,numSamples=100)
-#     species_wrapper("nTaxaMixingTime-70",species=70,seqlen=10000,numSamples=100)
-#     species_wrapper("nTaxaMixingTime-90",species=90,seqlen=10000,numSamples=100)
-#     species_wrapper("nTaxaMixingTime-100",species=100,seqlen=10000,numSamples=100)
-#     species_wrapper("nTaxaMixingTime-120",species=120,seqlen=10000,numSamples=100)
+#     seqlen_wrapper("nCharsMixingTime-90000", seqlen=90000, numSamples=100)
 
-def fake_main():
-    seqlen_wrapper("misc",seqlen=1000,numSamples=3)
+#     print("Program completed")
+
+def main():
+    species_wrapper("nTaxaMixingTime-10(MC^3)",species=10,seqlen=10000,numSamples=50,nchains=4)
+    species_wrapper("nTaxaMixingTime-30(MC^3)",species=30,seqlen=10000,numSamples=50,nchains=4)
+    species_wrapper("nTaxaMixingTime-50(MC^3)",species=50,seqlen=10000,numSamples=50,nchains=4)
+    species_wrapper("nTaxaMixingTime-70(MC^3)",species=70,seqlen=10000,numSamples=50,nchains=4)
+    species_wrapper("nTaxaMixingTime-90(MC^3)",species=90,seqlen=10000,numSamples=50,nchains=4)
+    species_wrapper("nTaxaMixingTime-100(MC^3)",species=100,seqlen=10000,numSamples=50,nchains=4)
+    species_wrapper("nTaxaMixingTime-120(MC^3)",species=120,seqlen=10000,numSamples=50,nchains=4)
+
+
 
 if __name__ == "__main__":
     main()
