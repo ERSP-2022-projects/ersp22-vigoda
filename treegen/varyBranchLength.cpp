@@ -33,6 +33,10 @@ int main(int argc, char *argv[])
     {
         numLeafs = stoi(argv[1]);
     }
+    if (argc > 2)
+    {
+        sequenceLength = stoi(argv[2]);
+    }
     string parentFolder = "results/" + to_string(numLeafs) + "leaves";
     if (!filesystem::exists(parentFolder))
     {

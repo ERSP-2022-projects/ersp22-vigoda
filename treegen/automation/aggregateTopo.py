@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-
+import subprocess
 
 
 
@@ -14,6 +14,8 @@ data_dict = {
 }
 topology = os.path.basename(os.getcwd())
 for config in ['allLong', 'allShort', 'internalLong', 'internalShort']:
+    if (not os.path.exists(config + '/iter_summary.txt')):
+        subprocess.run(['sh', 'runbatch.sh'], cwd=config + '/')
     iters = open(file = (config + '/iter_summary.txt'), mode='r')
     seeds = open(file = (config + '/seed_summary.txt'), mode='r')
     distances = open(file = (config + '/tree_distances.txt'), mode='r')
