@@ -17,6 +17,7 @@ int main(int argc, char **argv)
     double p_mutate = 0.2;     // default mutation probability = 0.2
     mutation_model smm = jc69; // default site mutation model = jc69
     double b_length = 0.1;
+    string filepath = "";
     for (int i = 1; i < argc; i++)
     {
         string arg = argv[i];
@@ -42,13 +43,19 @@ int main(int argc, char **argv)
         {
             b_length = stod(after);
         }
+        else if (param == "f" || param == "filepath")
+        {
+            filepath = after;
+        }
         else
             cerr << param << " is not a valid parameter" << endl;
     }
 
-    NewickTree newickFormatted(tree.getVertices(), tree.getEdges(), 3);
     NewickTree tree1(species, seed);
-    tree1.newickFormatted.printNewick(true);
-    newickFormatted.exportNewick("results/" + to_string(seed) + "_tree.txt", true);
+    tree1.setBranchLengths(b_length);
+    tree1.printNewick(true);
+    tree1.generateSequences(seqlen);
+    tree1.exportNexus("results/" + filepath + to_string(seed) + ".nex");
+    tree1.exportNewick("results/" + filepath + to_string(seed) + "_tree.txt", true);
     cout << "exported results to " << to_string(seed) << endl;
 }

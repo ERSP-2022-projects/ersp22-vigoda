@@ -14,7 +14,7 @@ using namespace std;
 double NewickTree::TreeNode::randomBranchLength()
 {
     // generate random branch length subject to alpha and beta set for given tree
-    return 1.0;
+    return 0.1;
 }
 
 NewickTree::TreeNode *NewickTree::TreeNode::addChild(string n)

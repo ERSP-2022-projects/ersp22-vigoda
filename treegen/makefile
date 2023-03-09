@@ -30,7 +30,6 @@ varyBranchLength: varyBranchLength.cpp NewickTree.o
 clean: 
 	rm -f *.o
 	rm -f *.out
-<<<<<<< HEAD
 
 clean_results:
 	rm -r results/*
@@ -39,5 +38,3 @@ debug_treegen:
 	gdb treegen.out
 debug_mixture: 
 	gdb generateMixture.out
-=======
->>>>>>> add-branch-length
