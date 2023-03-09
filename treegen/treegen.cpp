@@ -16,6 +16,7 @@ int main(int argc, char **argv)
     int seqlen = 1000;         // default sequence length = 1000
     double p_mutate = 0.2;     // default mutation probability = 0.2
     mutation_model smm = jc69; // default site mutation model = jc69
+    double b_length = 0.1;
     for (int i = 1; i < argc; i++)
     {
         string arg = argv[i];
@@ -37,17 +38,17 @@ int main(int argc, char **argv)
             p_mutate = stod(after);
         else if (param == "smm" || param == "mutation_model")
             smm = stomm(after);
+        else if (param == "bl" || param == "branch_length")
+        {
+            b_length = stod(after);
+        }
         else
             cerr << param << " is not a valid parameter" << endl;
     }
 
-    Tree tree(seed, species, seqlen, p_mutate, smm);
-    tree.generateTopology();
-    tree.dfsSequenceGen();
-    tree.writeToNexus();
-
     NewickTree newickFormatted(tree.getVertices(), tree.getEdges(), 3);
-    newickFormatted.printNewick(true);
+    NewickTree tree1(species, seed);
+    tree1.newickFormatted.printNewick(true);
     newickFormatted.exportNewick("results/" + to_string(seed) + "_tree.txt", true);
     cout << "exported results to " << to_string(seed) << endl;
 }

@@ -10,11 +10,11 @@ def treegen(species=10, seqlen=1000, p_mutate=0.2,
             mutation_model="jc69", seed=None):
     # set the path to the C++ executable and the command-line arguments
     executable_path = r"./treegen.out"
-    treegen_directory = r"C:/Users/yasha/Github/ersp22-vigoda/treegen"
-    results_directory = r"C:/Users/yasha/Github/ersp22-vigoda/treegen/results"
+    treegen_directory = r"../treegen/"
+    results_directory = r"../treegen/results/"
     old_directory = os.getcwd()
     # set the working directory to the location of the C++ executable
-    os.chdir(treegen_directory)
+    # os.chdir(treegen_directory)
     new_directory = os.getcwd()
     # run the C++ executable with the specified arguments
     command = [executable_path, f"species={species}",
@@ -23,7 +23,7 @@ def treegen(species=10, seqlen=1000, p_mutate=0.2,
     if seed is not None:
         command.append(f"seed={seed}")
     process = subprocess.run(
-        command, cwd=r"C:/Users/yasha/Github/ersp22-vigoda/treegen", capture_output=True, check=True)
+        command, cwd=r"../treegen/", capture_output=True, check=True)
     stdout = (process.stdout).decode()
     stderr = (process.stderr).decode()
     # stdout = process.stdout
@@ -32,7 +32,7 @@ def treegen(species=10, seqlen=1000, p_mutate=0.2,
     prefix = (stdout).split('\n')[-2].split()[-1]
 
     # change the working directory back to the original location
-    os.chdir(old_directory)
+    # os.chdir(old_directory)
 
     for filename in os.listdir(results_directory):
         if filename.startswith(prefix) and filename.endswith('.nex'):
@@ -54,7 +54,7 @@ def generate_mrbayes_script(nexus_filepath, target_directory=None,
     # Create the directory inside the analysis folder
     if target_directory == None:
         analysis_dir = os.path.normpath(
-            "C:/Users/yasha/Github/ersp22-vigoda/treeanalysis/analysis/misc")
+            "./analysis/misc")
     else:
         analysis_dir = target_directory
     analysis_dir = os.path.normpath(analysis_dir)
@@ -78,7 +78,7 @@ def generate_mrbayes_script(nexus_filepath, target_directory=None,
     if output_filepath != None:
         output_filename = os.path.basename(output_filepath)
         output_filepath = os.path.join(analysis_dir, output_filename)
-    TEMPLATE_PATH = r"C:\Users\yasha\Github\ersp22-vigoda\treeanalysis\mrbayes_template.nexus"
+    TEMPLATE_PATH = r"./mrbayes_template.nexus"
 
     temp_path = os.path.normpath(TEMPLATE_PATH)
 
@@ -169,8 +169,8 @@ def generateAndRun(**kwargs):
     return dir_path
 
 
-def CreateAndAnalyze(numSamples, test_dir_name="misc", **kwargs):
-    analysis_directory = r"C:\Users\yasha\Github\ersp22-vigoda\treeanalysis\analysis"
+def createAndAnalyze(numSamples, test_dir_name="misc", **kwargs):
+    analysis_directory = r"./analysis"
     target_directory = os.path.join(analysis_directory, test_dir_name)
     if not os.path.exists(target_directory):
         os.makedirs(target_directory)
@@ -244,6 +244,7 @@ def seqlen_wrapper(test_dir_name, seqlen, numSamples):
     treegen_params = {
         "species": 20,
         "seqlen": seqlen,
+        # add percentage parameter
     }
     mrbayes_params = {
         "ngen": 5000,
@@ -253,14 +254,14 @@ def seqlen_wrapper(test_dir_name, seqlen, numSamples):
         "stopval": 0.0001
     }
     all_params = {**treegen_params, **mrbayes_params}
-    test_directory = CreateAndAnalyze(
+    test_directory = createAndAnalyze(
         test_dir_name=test_dir_name, numSamples=numSamples, **all_params)
     time.sleep(60)
     print(f"Extracting Results in {test_dir_name}")
     print(extract_results(test_directory))
 
 
-def species_wrapper(test_dir_name, species, numSamples, seqlen=10000):
+def species_wrapper(test_dir_name, species, numSamples, branchlen = 0.1, seqlen=10000):
     treegen_params = {
         "species": species,
         "seqlen": seqlen,
@@ -273,7 +274,7 @@ def species_wrapper(test_dir_name, species, numSamples, seqlen=10000):
         "stopval": 0.0001
     }
     all_params = {**treegen_params, **mrbayes_params}
-    test_directory = CreateAndAnalyze(
+    test_directory = createAndAnalyze(
         test_dir_name=test_dir_name, numSamples=numSamples, **all_params)
     time.sleep(60)
     print(f"Extracting Results in {test_dir_name}")
@@ -295,8 +296,6 @@ def main():
 #     species_wrapper("nTaxaMixingTime-120",species=120,seqlen=10000,numSamples=100)
 
 
-def fake_main():
-    seqlen_wrapper("misc", seqlen=1000, numSamples=3)
 
 
 if __name__ == "__main__":

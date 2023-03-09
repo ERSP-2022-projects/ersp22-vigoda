@@ -44,8 +44,15 @@ NewickTree::NewickTree(vector<vector<int>> adj, vector<string> names, int rootIn
     transitionMatrix = map<char, map<char, double>>();
     adjToTree(adj, names, rootIndex);
 }
-NewickTree::NewickTree(int numLeafs) : NewickTree()
+NewickTree::NewickTree(int numLeafs, int seed) : NewickTree()
 {
+    random_device rd;
+
+    if (seed == -1)
+    {
+        seed = rd();
+    }
+    mt19937 mt(seed);
     vector<vector<int>> adjList(2 * numLeafs - 1); // total # of nodes will be 2n-1
     vector<int> leaves;
     leaves.push_back(0);
@@ -53,7 +60,7 @@ NewickTree::NewickTree(int numLeafs) : NewickTree()
     while (leaves.size() < numLeafs)
     {
         // randomly pick a leaf to split
-        int index = rand() % (int)leaves.size();
+        int index = mt() % (int)leaves.size();
         int parent = leaves[index];
         leaves.erase(leaves.begin() + index); // O(n) x_x
         // add left child

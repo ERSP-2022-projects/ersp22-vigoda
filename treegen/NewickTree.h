@@ -66,7 +66,7 @@ public:
      *
      * @param numLeafs The number of leaf nodes in this random tree
      */
-    NewickTree(int numLeafs);
+    NewickTree(int numLeafs, int seed = -1);
     /**
      * Constructs a tree from a Vertex-Edge representation (see tree.h for details).
      *
