@@ -11,11 +11,55 @@
 #include <stdexcept>
 using namespace std;
 
+double NewickTree::TreeNode::randomBranchLength()
+{
+    // generate random branch length subject to alpha and beta set for given tree
+    return 1.0;
+}
+
+NewickTree::TreeNode *NewickTree::TreeNode::addChild(string n)
+{
+    // generate random branch length from gamma distribution
+    double bl = randomBranchLength();
+    return addChild(n, bl);
+}
+
+NewickTree::TreeNode *NewickTree::TreeNode::addChild(string n, double bl)
+{
+    TreeNode *newNode = new TreeNode(n, this);
+    children.push_back(TreeBranch(newNode, bl));
+    return newNode;
+}
+
+NewickTree::TreeNode *NewickTree::TreeNode::addChild(TreeNode *child)
+{
+    // generate random branch length from gamma distribution
+    double bl = randomBranchLength();
+    return addChild(child, bl);
+}
+
+NewickTree::TreeNode *NewickTree::TreeNode::addChild(TreeNode *child, double bl)
+{
+    children.push_back(TreeBranch(child, bl));
+    return child;
+}
+
 NewickTree::NewickTree()
 {
     root = nullptr;
     sequenceLength = 0;
-    transitionMatrix = map<char, map<char, double>>();
+    // transitionMatrix = map<char, map<char, double>>();
+    nucToIndex = map<char, int>{
+        {'A', 0},
+        {'T', 1},
+        {'G', 2},
+        {'C', 3}};
+    indexToNuc = map<int, char>{
+        {0, 'A'},
+        {1, 'T'},
+        {2, 'G'},
+        {3, 'C'}};
+    rateMatrix = Eigen::MatrixXd(0, 0);
 }
 NewickTree::NewickTree(string rootName) : NewickTree()
 {
@@ -41,7 +85,7 @@ NewickTree::NewickTree(vector<vector<int>> adj, vector<string> names, int rootIn
 {
     // should check that adj and names are same size and rootIndex < size later
     sequenceLength = 0;
-    transitionMatrix = map<char, map<char, double>>();
+    // transitionMatrix = map<char, map<char, double>>();
     adjToTree(adj, names, rootIndex);
 }
 NewickTree::NewickTree(int numLeafs, int seed) : NewickTree()
@@ -80,6 +124,10 @@ NewickTree::NewickTree(int numLeafs, int seed) : NewickTree()
     }
     adjToTree(adjList, names, 0);
 }
+NewickTree::TreeNode *NewickTree::getRoot()
+{
+    return root;
+}
 void NewickTree::adjToTree(vector<vector<int>> adj, vector<string> names, int rootIndex)
 {
     vector<bool> visited(adj.size());
@@ -110,9 +158,9 @@ void NewickTree::deleteDFS(NewickTree::TreeNode *start)
     {
         return;
     }
-    for (NewickTree::TreeNode *child : start->children)
+    for (TreeBranch childBranch : start->children)
     {
-        deleteDFS(child);
+        deleteDFS(childBranch.to);
     }
     delete start;
 }
@@ -128,7 +176,7 @@ void NewickTree::newickDFS(NewickTree::TreeNode *start, vector<string> &symbols,
         symbols.push_back("(");
         for (int i = 0; i < start->childrenCount(); i++)
         {
-            NewickTree::TreeNode *child = start->children[i];
+            TreeNode *child = start->children[i].to;
             if (i > 0)
             {
                 symbols.push_back(",");
@@ -190,7 +238,7 @@ NewickTree::TreeNode *NewickTree::importDFS(TreeNode *parent, string &newickStri
     // if (parent != nullptr)
     //     cout << "creating " << currName << " under " << parent->name << endl;
     pos = nextEnd;
-    if (newickString.at(nextEnd) == ')' || parent == nullptr && pos < newickString.size())
+    if (newickString.at(nextEnd) == ')')
     {
         while (newickString.at(pos) != '(')
         {
@@ -234,42 +282,93 @@ int NewickTree::getLeafCount()
         {
             leafCount++;
         }
-        for (TreeNode *child : currNode->children)
+        for (TreeBranch childBranch : currNode->children)
         {
-            next.push(child);
+            next.push(childBranch.to);
         }
     }
     return leafCount;
 }
-void NewickTree::setTransition(map<char, map<char, double>> transitionMatrix)
+void NewickTree::setRate(Eigen::MatrixXd rateMatrix)
 {
-
-    if (transitionMatrix.size() == 0)
+    if (rateMatrix.size() == 0)
     {
-        double p_mutate = 0.3;
-        transitionMatrix = map<char, map<char, double>>{
-            {'A', {{'A', 1.0 - p_mutate}, {'T', p_mutate / 3.0}, {'G', p_mutate / 3.0}, {'C', p_mutate / 3.0}}},
-            {'T', {{'A', p_mutate / 3.0}, {'T', 1.0 - p_mutate}, {'G', p_mutate / 3.0}, {'C', p_mutate / 3.0}}},
-            {'G', {{'A', p_mutate / 3.0}, {'T', p_mutate / 3.0}, {'G', 1.0 - p_mutate}, {'C', p_mutate / 3.0}}},
-            {'C', {{'A', p_mutate / 3.0}, {'T', p_mutate / 3.0}, {'G', p_mutate / 3.0}, {'C', 1.0 - p_mutate}}}};
+        double p_mutate = 0.1;
+        double n_mutate = -3.0 * p_mutate;
+        rateMatrix = Eigen::MatrixXd(4, 4);
+        rateMatrix << n_mutate, p_mutate, p_mutate, p_mutate,
+            p_mutate, n_mutate, p_mutate, p_mutate,
+            p_mutate, p_mutate, n_mutate, p_mutate,
+            p_mutate, p_mutate, p_mutate, n_mutate;
     }
-    this->transitionMatrix = transitionMatrix;
+    this->rateMatrix = rateMatrix;
+}
+
+Eigen::MatrixXd NewickTree::calcTransition(double branchLength)
+{
+    return (branchLength * rateMatrix).exp();
+}
+void NewickTree::setBranchLengths(double branchLength)
+{
+    queue<TreeNode *> next;
+    next.push(root);
+    while (next.size() > 0)
+    {
+        TreeNode *curr = next.front();
+        next.pop();
+        for (int i = 0; i < curr->childrenCount(); i++)
+        {
+            TreeBranch childBranch = (curr->children)[i];
+            next.push(childBranch.to);
+            (curr->children)[i].length = branchLength;
+        }
+    }
+}
+void NewickTree::setInternalLengths(double branchLength)
+{
+    queue<TreeNode *> next;
+    next.push(root);
+    while (next.size() > 0)
+    {
+        TreeNode *curr = next.front();
+        next.pop();
+        for (int i = 0; i < curr->childrenCount(); i++)
+        {
+            TreeBranch childBranch = (curr->children)[i];
+            if (childBranch.to->isLeaf())
+            {
+                continue;
+            }
+            next.push(childBranch.to);
+            (curr->children)[i].length = branchLength;
+        }
+    }
+}
+void NewickTree::setTerminalLengths(double branchLength)
+{
+    queue<TreeNode *> next;
+    next.push(root);
+    while (next.size() > 0)
+    {
+        TreeNode *curr = next.front();
+        next.pop();
+        for (int i = 0; i < curr->childrenCount(); i++)
+        {
+            TreeBranch childBranch = (curr->children)[i];
+            if (childBranch.to->isLeaf())
+            {
+                (curr->children)[i].length = branchLength;
+            }
+            next.push(childBranch.to);
+        }
+    }
 }
 void NewickTree::generateSequences(int sequenceLength)
 {
-    if (transitionMatrix.size() != symbols.size())
+    if (rateMatrix.rows() != symbols.size() || rateMatrix.cols() != symbols.size())
     {
-        setTransition();
-        cerr << "dimensions of transitionMatrix are incorrect, setting transitionMatrix to default (mutation probability of 0.3 equally split)" << endl;
-    }
-    for (pair<char, map<char, double>> mapping : transitionMatrix)
-    {
-        if (mapping.second.size() != symbols.size())
-        {
-            setTransition();
-            cerr << "dimensions of transitionMatrix are incorrect, setting transitionMatrix to default (mutation probability of 0.3 equally split)" << endl;
-            break;
-        }
+        setRate();
+        cerr << "dimensions of rateMatrix are incorrect, setting rateMatrix to default (mutation probability of 0.3 equally split)" << endl;
     }
     this->sequenceLength = sequenceLength;
     random_device rd;
@@ -290,29 +389,31 @@ void NewickTree::generateSequences(int sequenceLength)
     {
         TreeNode *currNode = next.front();
         next.pop();
-        for (TreeNode *child : currNode->children)
+        for (TreeBranch childBranch : currNode->children)
         {
+            TreeNode *child = childBranch.to;
             string childSeq = "";
             for (int i = 0; i < currNode->sequence.size(); i++)
             {
                 char nucleotide = currNode->sequence.at(i);
+                int nucIndex = nucToIndex[nucleotide];
                 double randChoice = distribution(gen);
-                map<char, double> probabilities = transitionMatrix[nucleotide];
+                Eigen::MatrixXd transitionMatrix = calcTransition(childBranch.length);
                 double cummSum = 0.0;
-                for (pair<char, double> candidate : probabilities)
+                for (int candidate = 0; candidate < 4; candidate++)
                 {
-                    cummSum += candidate.second;
+                    cummSum += transitionMatrix(nucIndex, candidate);
                     if (cummSum >= randChoice)
                     {
                         // cout << nucleotide << " " << candidate.first << " " << cummSum << " " << candidate.second << endl;
-                        childSeq.push_back(candidate.first);
+                        childSeq.push_back(indexToNuc[candidate]);
                         break;
                     }
                 }
                 // deals with floating point errors that cause transition probabilities to not sum up to 1 (should also manually check that they sum to 1 in each row)
                 if (childSeq.size() < i + 1)
                 {
-                    childSeq.push_back(probabilities.rbegin()->first);
+                    childSeq.push_back(indexToNuc[3]);
                 }
             }
             child->sequence = childSeq;
@@ -386,9 +487,9 @@ map<string, string> NewickTree::getSequences()
         {
             sequences[currNode->name] = currNode->sequence;
         }
-        for (TreeNode *child : currNode->children)
+        for (TreeBranch childBranch : currNode->children)
         {
-            next.push(child);
+            next.push(childBranch.to);
         }
     }
     return sequences;

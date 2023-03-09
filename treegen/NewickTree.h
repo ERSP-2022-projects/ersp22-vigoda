@@ -6,29 +6,36 @@
 #include <vector>
 #include <utility>
 #include <map>
+#include <Eigen/Dense>
+#include <unsupported/Eigen/MatrixFunctions>
 using namespace std;
 
 class NewickTree
 {
+
+public:
+    struct TreeNode;
+    struct TreeBranch
+    {
+        double length;
+        TreeNode *to;
+        TreeBranch() {}
+        TreeBranch(TreeNode *t, double l) : to(t), length(l) {}
+    };
     struct TreeNode
     {
+
         string name;
         string sequence;
         TreeNode *parent;
-        vector<TreeNode *> children;
-        TreeNode() : name(""), sequence(""), parent(nullptr), children(vector<TreeNode *>(0)) {}
-        TreeNode(string n, TreeNode *p) : name(n), sequence(""), parent(p), children(vector<TreeNode *>(0)) {}
-        TreeNode *addChild(string n)
-        {
-            TreeNode *newNode = new TreeNode(n, this);
-            children.push_back(newNode);
-            return newNode;
-        }
-        TreeNode *addChild(TreeNode *child)
-        {
-            children.push_back(child);
-            return child;
-        }
+        vector<TreeBranch> children;
+        TreeNode() : name(""), sequence(""), parent(nullptr), children(vector<TreeBranch>(0)) {}
+        TreeNode(string n, TreeNode *p) : name(n), sequence(""), parent(p), children(vector<TreeBranch>(0)) {}
+        TreeNode *addChild(string n);
+        TreeNode *addChild(string n, double bl);
+        TreeNode *addChild(TreeNode *child);
+        TreeNode *addChild(TreeNode *child, double bl);
+        double randomBranchLength();
         int childrenCount()
         {
             return children.size();
@@ -38,19 +45,6 @@ class NewickTree
             return (children.size() == 0);
         }
     };
-
-private:
-    static int createdCount;
-    int sequenceLength;
-    TreeNode *root;
-    map<char, map<char, double>> transitionMatrix;
-    inline static vector<char> symbols = {'A', 'T', 'G', 'C'};
-    void adjToTree(vector<vector<int>> adj, vector<string> names, int rootIndex);
-    void newickDFS(TreeNode *start, vector<string> &symbols, bool leafOnly);
-    void deleteDFS(TreeNode *start);
-    TreeNode *importDFS(TreeNode *parent, string &newickString, int &pos);
-
-public:
     /**
      * Constructs an empty tree with a null 'root'
      */
@@ -88,6 +82,10 @@ public:
      * Deletes the NewickTree by doing a post-order traversal of each TreeNode starting from the root and deleting each TreeNode pointer.
      */
     ~NewickTree();
+    /**
+     * @return The TreeNode pointer for the root of the given tree
+     */
+    TreeNode *getRoot();
     /**
      * @return The length of character sequences in this tree. (0 if no sequences have been generated).
      */
@@ -131,17 +129,27 @@ public:
      */
     void exportNexus(string filename, bool numericSort = false);
     /**
-     * Sets the transition matrix for generating genetic sequences (0.3 mutation rate Jukes-Cantor by default).
-     *
-     * @param transitionMatrix Map of nucleotides to their transition probability to any other nucleotide.
-     * (e.g. transitionMatrix['A']['G']) is probability of Adenine mutating to Guanine between neighboring nodes.
+     * Sets rate matrix for tree to calculate transition matrices from.
+     * @param rateMatrix The intended rate matrix for this tree (0.1 on all off-diagonal elements and -0.3 on diagonal elements by default).
      */
-    void setTransition(map<char, map<char, double>> transitionMatrix = map<char, map<char, double>>());
+    void setRate(Eigen::MatrixXd rateMatrix = Eigen::MatrixXd(0, 0));
     /**
      * Gets genetic sequences associated with each leaf node.
      *
      * @return Map of the name of each leaf node to its associated genetic sequence.
      */
+    /**
+     * @param branchLength The branch length to set all branches in this tree to
+     */
+    void setBranchLengths(double branchLength);
+    /**
+     * @param branchLength The branch length to set all the internal branches in this tree to
+     */
+    void setInternalLengths(double branchLength);
+    /**
+     * @param branchLength The branch length to set all terminal branches in this tree
+     */
+    void setTerminalLengths(double branchLength);
     map<string, string> getSequences();
     /**
      * Converts a map of genetic sequences to Nexus format and stores it in a file.
@@ -161,6 +169,22 @@ public:
      * @param weights The index-aligned weight associated with each tree in 'trees'. Must sum up to 1. (Equally divided by default).
      */
     static map<string, string> mixtureModel(vector<NewickTree *> trees, vector<double> weights);
+    Eigen::MatrixXd calcTransition(double branchLength);
+
+private:
+    static int createdCount;
+    int sequenceLength;
+    TreeNode *root;
+    map<char, int> nucToIndex;
+    map<int, char> indexToNuc;
+    map<char, map<char, double>> transitionMatrix;
+    Eigen::MatrixXd rateMatrix;
+    inline static vector<char> symbols = {'A', 'T', 'G', 'C'};
+    void adjToTree(vector<vector<int>> adj, vector<string> names, int rootIndex);
+    void newickDFS(TreeNode *start, vector<string> &symbols, bool leafOnly);
+    void deleteDFS(TreeNode *start);
+    Eigen::MatrixXd calcTransition(double branchLength, Eigen::MatrixXd rateMatrix);
+    TreeNode *importDFS(TreeNode *parent, string &newickString, int &pos);
 };
 
 #endif
