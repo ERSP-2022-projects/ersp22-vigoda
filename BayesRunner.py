@@ -4,34 +4,42 @@ import shutil
 import re
 import numpy as np
 import time
+from contextlib import contextmanager
+
+@contextmanager
+def cwd(path):
+    oldpwd = os.getcwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(oldpwd)
 
 
 def treegen(species=10, seqlen=1000, p_mutate=0.2,
             mutation_model="jc69", seed=None):
     # set the path to the C++ executable and the command-line arguments
-    executable_path = r"treegen.out"
-    treegen_directory = r"./treegen"
+    executable = r"./treegen.out"
+    treegen_directory = r"./treegen/"
     results_directory = r"./treegen/results"
-    # old_directory = os.getcwd()
-    # os.chdir(treegen_directory)
-    # new_directory = os.getcwd()
+    
     # run the C++ executable with the specified arguments
-    command = [executable_path, f"species={species}",
+    command = [executable, f"species={species}",
                f"seqlen={seqlen}", f"p_mutate={p_mutate}",
                f"mutation_model={mutation_model}"]
     if seed is not None:
         command.append(f"seed={seed}")
-    process = subprocess.run(
-        command, cwd = treegen_directory, capture_output=True)
+        
+    #change directories and run 
+    with cwd(treegen_directory):
+        process = subprocess.run(
+            command, capture_output=True)
+        
     stdout = (process.stdout).decode()
     stderr = (process.stderr).decode()
-    # stdout = process.stdout
-    # stderr = process.stderr
+        
     # get the prefix of the newly created NEXUS file
     prefix = (stdout).split('\n')[-2].split()[-1]
-
-    # change the working directory back to the original location
-    # os.chdir(old_directory)
 
     for filename in os.listdir(results_directory):
         if filename.startswith(prefix) and filename.endswith('.nex'):
@@ -40,10 +48,11 @@ def treegen(species=10, seqlen=1000, p_mutate=0.2,
     raise FileNotFoundError(
         f"The file with prefix: '{prefix}' does not exist in results directory")
 
-# def generate_Mixture(filepath1 = None,filepath2=None,
-#                      species=10, seqlen=1000, p_mutate=0.2,
-#                     mutation_model="jc69", seed=None):
-#     if filepath1 != None:
+def generate_Mixture(filepath1 = None,filepath2=None,
+                     species=10, seqlen=1000, p_mutate=0.2,
+                    mutation_model="jc69", seed=None):
+    pass
+    # if filepath1 != None:
         
     
 
@@ -60,7 +69,7 @@ def generate_mrbayes_script(nexus_filepath, target_directory=None,
     # Create the directory inside the analysis folder
     if target_directory == None:
         analysis_dir = os.path.normpath(
-            "C:/Users/yasha/Github/ersp22-vigoda/treeanalysis/analysis/misc")
+            "./treeanalysis/analysis/misc")
     else:
         analysis_dir = target_directory
     analysis_dir = os.path.normpath(analysis_dir)
@@ -127,14 +136,18 @@ def run_mrbayes(script_filepath, directory=None):
     script_filepath = os.path.normpath(script_filepath)
     if directory == None:
         directory = os.path.dirname(script_filepath)
-
-    short_filepath = os.path.basename(script_filepath)
+    directory = os.path.normpath(directory)
+    
+    #mrBayes only takes filepaths of max length 100 
+    #so this replaces filepaths with a short relative filepath
     if (len(script_filepath) >= 99):
+        short_filepath = os.path.relpath(script_filepath,start = directory)
         script_filepath = short_filepath
-
-    command = ["mb", script_filepath]
-    process = subprocess.run(
-        command, cwd=directory, capture_output=True)
+        
+    command = ["mb", script_filepath]    
+    with cwd(directory):  
+        process = subprocess.run(
+            command, cwd=directory, capture_output=True)
 
     return (process.stdout, process.stderr, directory)
 
