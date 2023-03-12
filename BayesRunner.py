@@ -5,6 +5,7 @@ import re
 import numpy as np
 import time
 from contextlib import contextmanager
+from datetime import datetime
 
 @contextmanager
 def cwd(path):
@@ -14,6 +15,13 @@ def cwd(path):
         yield
     finally:
         os.chdir(oldpwd)
+
+
+
+def print_timestamped(*args, **kwargs):
+    now = datetime.now()
+    timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{timestamp}]", *args, **kwargs)
 
 
 def treegen(species=10, seqlen=1000, p_mutate=0.2,
@@ -84,7 +92,7 @@ def generate_mrbayes_script(nexus_filepath, target_directory=None,
             dest_path = os.path.join(dest_dir, file_name)
             # Check if the file already exists in the destination directory
             if os.path.exists(dest_path):
-                print(
+                print_timestamped(
                     f"File '{file_name}' already exists in the destination directory, skipping...")
             else:
                 # If the file does not exist in the destination directory, move it there
@@ -133,21 +141,23 @@ def generate_mrbayes_script(nexus_filepath, target_directory=None,
 
 
 def run_mrbayes(script_filepath, directory=None):
-    script_filepath = os.path.normpath(script_filepath)
+    script_filepath = os.path.normpath(os.path.abspath(script_filepath))
+    assert os.path.isfile(script_filepath), f"script_filepath doesn't exist"
+    
     if directory == None:
         directory = os.path.dirname(script_filepath)
+    if (len(script_filepath) >= 99):
+        short_filepath = os.path.relpath(script_filepath,start = directory)
+        script_filepath = short_filepath
     directory = os.path.normpath(directory)
     
     #mrBayes only takes filepaths of max length 100 
     #so this replaces filepaths with a short relative filepath
-    if (len(script_filepath) >= 99):
-        short_filepath = os.path.relpath(script_filepath,start = directory)
-        script_filepath = short_filepath
         
     command = ["mb", script_filepath]    
     with cwd(directory):  
         process = subprocess.run(
-            command, cwd=directory, capture_output=True)
+            command, capture_output=True)
 
     return (process.stdout, process.stderr, directory)
 
@@ -193,21 +203,21 @@ def CreateAndAnalyze(numSamples, test_dir_name="misc", **kwargs):
     target_directory = os.path.join(analysis_directory, test_dir_name)
     if not os.path.exists(target_directory):
         os.makedirs(target_directory)
-        print(f"Created directory: {target_directory}")
+        print_timestamped(f"Created directory: {target_directory}")
 
     kwargs["target_directory"] = target_directory
 
     for i in range(numSamples):
         generateAndRun(**kwargs)
-        print(f"Analyzing sample {i+1}")
-    print(f"Analyzing {numSamples} samples completed")
+        print_timestamped(f"Analyzing sample {i+1}")
+    print_timestamped(f"Analyzing {numSamples} samples completed")
     return target_directory
 
 
 def extract_results(extract_from_directory):
     extract_from_directory = os.path.normpath(extract_from_directory)
     table = extract_data_from_directory(extract_from_directory)
-    print(f"{table=}")
+    print_timestamped(f"{table=}")
 
 
 def extract_data_from_directory(target_directory, output_filename="_results.csv"):
@@ -259,6 +269,26 @@ def extract_data(file_path):
     return (prefix, gen_num, std_dev)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def seqlen_wrapper(test_dir_name, seqlen, numSamples):
     treegen_params = {
         "species": 20,
@@ -275,8 +305,8 @@ def seqlen_wrapper(test_dir_name, seqlen, numSamples):
     test_directory = CreateAndAnalyze(
         test_dir_name=test_dir_name, numSamples=numSamples, **all_params)
     time.sleep(60)
-    print(f"Extracting Results in {test_dir_name}")
-    print(extract_results(test_directory))
+    print_timestamped(f"Extracting Results in {test_dir_name}")
+    print_timestamped(extract_results(test_directory))
 
 
 def species_wrapper(test_dir_name, species, numSamples, seqlen=10000):
@@ -295,24 +325,14 @@ def species_wrapper(test_dir_name, species, numSamples, seqlen=10000):
     test_directory = CreateAndAnalyze(
         test_dir_name=test_dir_name, numSamples=numSamples, **all_params)
     time.sleep(60)
-    print(f"Extracting Results in {test_dir_name}")
-    print(extract_results(test_directory))
+    print_timestamped(f"Extracting Results in {test_dir_name}")
+    print_timestamped(extract_results(test_directory))
 
 
 def main():
-    seqlen_wrapper("nCharsMixingTime-90000", seqlen=90000, numSamples=100)
+    seqlen_wrapper("nCharsMixingTime-20000", seqlen=20000, numSamples=10)
 
-    print("Program completed")
-
-# def main():
-#     species_wrapper("nTaxaMixingTime-10",species=10,seqlen=10000,numSamples=100)
-#     species_wrapper("nTaxaMixingTime-30",species=30,seqlen=10000,numSamples=100)
-#     species_wrapper("nTaxaMixingTime-50",species=50,seqlen=10000,numSamples=100)
-#     species_wrapper("nTaxaMixingTime-70",species=70,seqlen=10000,numSamples=100)
-#     species_wrapper("nTaxaMixingTime-90",species=90,seqlen=10000,numSamples=100)
-#     species_wrapper("nTaxaMixingTime-100",species=100,seqlen=10000,numSamples=100)
-#     species_wrapper("nTaxaMixingTime-120",species=120,seqlen=10000,numSamples=100)
-
+    print_timestamped("Program completed")
 
 def fake_main():
     seqlen_wrapper("misc", seqlen=1000, numSamples=3)
