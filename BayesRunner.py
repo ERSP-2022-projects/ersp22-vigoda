@@ -4,35 +4,50 @@ import shutil
 import re
 import numpy as np
 import time
+from contextlib import contextmanager
+from datetime import datetime
+
+@contextmanager
+def cwd(path):
+    oldpwd = os.getcwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(oldpwd)
+
+
+
+def print_timestamped(*args, **kwargs):
+    now = datetime.now()
+    timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{timestamp}]", *args, **kwargs)
 
 
 def treegen(species=10, seqlen=1000, p_mutate=0.2,
             mutation_model="jc69", seed=None):
     # set the path to the C++ executable and the command-line arguments
-    executable_path = r"./treegen.out"
-    treegen_directory = r"C:/Users/yasha/Github/ersp22-vigoda/treegen"
-    results_directory = r"C:/Users/yasha/Github/ersp22-vigoda/treegen/results"
-    old_directory = os.getcwd()
-    # set the working directory to the location of the C++ executable
-    os.chdir(treegen_directory)
-    new_directory = os.getcwd()
+    executable = r"./treegen.out"
+    treegen_directory = r"./treegen/"
+    results_directory = r"./treegen/results"
+    
     # run the C++ executable with the specified arguments
-    command = [executable_path, f"species={species}",
+    command = [executable, f"species={species}",
                f"seqlen={seqlen}", f"p_mutate={p_mutate}",
                f"mutation_model={mutation_model}"]
     if seed is not None:
         command.append(f"seed={seed}")
-    process = subprocess.run(
-        command, cwd=r"C:/Users/yasha/Github/ersp22-vigoda/treegen", capture_output=True, check=True)
+        
+    #change directories and run 
+    with cwd(treegen_directory):
+        process = subprocess.run(
+            command, capture_output=True)
+        
     stdout = (process.stdout).decode()
     stderr = (process.stderr).decode()
-    # stdout = process.stdout
-    # stderr = process.stderr
+        
     # get the prefix of the newly created NEXUS file
     prefix = (stdout).split('\n')[-2].split()[-1]
-
-    # change the working directory back to the original location
-    os.chdir(old_directory)
 
     for filename in os.listdir(results_directory):
         if filename.startswith(prefix) and filename.endswith('.nex'):
@@ -40,6 +55,14 @@ def treegen(species=10, seqlen=1000, p_mutate=0.2,
 
     raise FileNotFoundError(
         f"The file with prefix: '{prefix}' does not exist in results directory")
+
+def generate_Mixture(filepath1 = None,filepath2=None,
+                     species=10, seqlen=1000, p_mutate=0.2,
+                    mutation_model="jc69", seed=None):
+    pass
+    # if filepath1 != None:
+        
+    
 
 
 def generate_mrbayes_script(nexus_filepath, target_directory=None,
@@ -54,7 +77,7 @@ def generate_mrbayes_script(nexus_filepath, target_directory=None,
     # Create the directory inside the analysis folder
     if target_directory == None:
         analysis_dir = os.path.normpath(
-            "C:/Users/yasha/Github/ersp22-vigoda/treeanalysis/analysis/misc")
+            "./treeanalysis/analysis/misc")
     else:
         analysis_dir = target_directory
     analysis_dir = os.path.normpath(analysis_dir)
@@ -69,7 +92,7 @@ def generate_mrbayes_script(nexus_filepath, target_directory=None,
             dest_path = os.path.join(dest_dir, file_name)
             # Check if the file already exists in the destination directory
             if os.path.exists(dest_path):
-                print(
+                print_timestamped(
                     f"File '{file_name}' already exists in the destination directory, skipping...")
             else:
                 # If the file does not exist in the destination directory, move it there
@@ -78,7 +101,7 @@ def generate_mrbayes_script(nexus_filepath, target_directory=None,
     if output_filepath != None:
         output_filename = os.path.basename(output_filepath)
         output_filepath = os.path.join(analysis_dir, output_filename)
-    TEMPLATE_PATH = r"C:\Users\yasha\Github\ersp22-vigoda\treeanalysis\mrbayes_template.nexus"
+    TEMPLATE_PATH = r"./treeanalysis/mrbayes_template.nexus"
 
     temp_path = os.path.normpath(TEMPLATE_PATH)
 
@@ -118,17 +141,23 @@ def generate_mrbayes_script(nexus_filepath, target_directory=None,
 
 
 def run_mrbayes(script_filepath, directory=None):
-    script_filepath = os.path.normpath(script_filepath)
+    script_filepath = os.path.normpath(os.path.abspath(script_filepath))
+    assert os.path.isfile(script_filepath), f"script_filepath doesn't exist"
+    
     if directory == None:
         directory = os.path.dirname(script_filepath)
-
-    short_filepath = os.path.basename(script_filepath)
     if (len(script_filepath) >= 99):
+        short_filepath = os.path.relpath(script_filepath,start = directory)
         script_filepath = short_filepath
-
-    command = ["mb", script_filepath]
-    process = subprocess.run(
-        command, cwd=directory, capture_output=True)
+    directory = os.path.normpath(directory)
+    
+    #mrBayes only takes filepaths of max length 100 
+    #so this replaces filepaths with a short relative filepath
+        
+    command = ["mb", script_filepath]    
+    with cwd(directory):  
+        process = subprocess.run(
+            command, capture_output=True)
 
     return (process.stdout, process.stderr, directory)
 
@@ -170,25 +199,25 @@ def generateAndRun(**kwargs):
 
 
 def CreateAndAnalyze(numSamples, test_dir_name="misc", **kwargs):
-    analysis_directory = r"C:\Users\yasha\Github\ersp22-vigoda\treeanalysis\analysis"
+    analysis_directory = r"./treeanalysis/analysis"
     target_directory = os.path.join(analysis_directory, test_dir_name)
     if not os.path.exists(target_directory):
         os.makedirs(target_directory)
-        print(f"Created directory: {target_directory}")
+        print_timestamped(f"Created directory: {target_directory}")
 
     kwargs["target_directory"] = target_directory
 
     for i in range(numSamples):
         generateAndRun(**kwargs)
-        print(f"Analyzing sample {i+1}")
-    print(f"Analyzing {numSamples} samples completed")
+        print_timestamped(f"Analyzing sample {i+1}")
+    print_timestamped(f"Analyzing {numSamples} samples completed")
     return target_directory
 
 
 def extract_results(extract_from_directory):
     extract_from_directory = os.path.normpath(extract_from_directory)
     table = extract_data_from_directory(extract_from_directory)
-    print(f"{table=}")
+    print_timestamped(f"{table=}")
 
 
 def extract_data_from_directory(target_directory, output_filename="_results.csv"):
@@ -240,6 +269,26 @@ def extract_data(file_path):
     return (prefix, gen_num, std_dev)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def seqlen_wrapper(test_dir_name, seqlen, numSamples):
     treegen_params = {
         "species": 20,
@@ -256,8 +305,8 @@ def seqlen_wrapper(test_dir_name, seqlen, numSamples):
     test_directory = CreateAndAnalyze(
         test_dir_name=test_dir_name, numSamples=numSamples, **all_params)
     time.sleep(60)
-    print(f"Extracting Results in {test_dir_name}")
-    print(extract_results(test_directory))
+    print_timestamped(f"Extracting Results in {test_dir_name}")
+    print_timestamped(extract_results(test_directory))
 
 
 def species_wrapper(test_dir_name, species, numSamples, seqlen=10000):
@@ -276,24 +325,14 @@ def species_wrapper(test_dir_name, species, numSamples, seqlen=10000):
     test_directory = CreateAndAnalyze(
         test_dir_name=test_dir_name, numSamples=numSamples, **all_params)
     time.sleep(60)
-    print(f"Extracting Results in {test_dir_name}")
-    print(extract_results(test_directory))
+    print_timestamped(f"Extracting Results in {test_dir_name}")
+    print_timestamped(extract_results(test_directory))
 
 
 def main():
-    seqlen_wrapper("nCharsMixingTime-90000", seqlen=90000, numSamples=100)
+    seqlen_wrapper("nCharsMixingTime-20000", seqlen=20000, numSamples=10)
 
-    print("Program completed")
-
-# def main():
-#     species_wrapper("nTaxaMixingTime-10",species=10,seqlen=10000,numSamples=100)
-#     species_wrapper("nTaxaMixingTime-30",species=30,seqlen=10000,numSamples=100)
-#     species_wrapper("nTaxaMixingTime-50",species=50,seqlen=10000,numSamples=100)
-#     species_wrapper("nTaxaMixingTime-70",species=70,seqlen=10000,numSamples=100)
-#     species_wrapper("nTaxaMixingTime-90",species=90,seqlen=10000,numSamples=100)
-#     species_wrapper("nTaxaMixingTime-100",species=100,seqlen=10000,numSamples=100)
-#     species_wrapper("nTaxaMixingTime-120",species=120,seqlen=10000,numSamples=100)
-
+    print_timestamped("Program completed")
 
 def fake_main():
     seqlen_wrapper("misc", seqlen=1000, numSamples=3)
