@@ -17,6 +17,8 @@ def treegen(species=10, seqlen=1000, p_mutate=0.2,
     # os.chdir(treegen_directory)
     new_directory = os.getcwd()
     # run the C++ executable with the specified arguments
+
+    # change p_mutate to b_length
     command = [executable_path, f"species={species}",
                f"seqlen={seqlen}", f"p_mutate={p_mutate}",
                f"mutation_model={mutation_model}"]

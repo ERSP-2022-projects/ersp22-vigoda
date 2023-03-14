@@ -3,7 +3,7 @@ default: treegen
 all: treegen generateMixture
 
 treegen: treegen.cpp tree.o NewickTree.o
-	g++ --std=c++17 -g treegen.cpp tree.o NewickTree.o -o treegen.out
+	g++ --std=c++17 -I /opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 -g treegen.cpp tree.o NewickTree.o -o treegen.out
 	mkdir -p results
 
 NewickTree.o: NewickTree.cpp NewickTree.h

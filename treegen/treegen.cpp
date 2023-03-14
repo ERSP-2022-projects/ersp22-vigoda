@@ -4,6 +4,7 @@
 #include <random>  // for random_device and uniform_int_distribution
 #include <cstdint> // for uint64_t
 #include <ctime>   // for time
+#include <filesystem>
 using namespace std;
 
 int main(int argc, char **argv)
@@ -51,11 +52,17 @@ int main(int argc, char **argv)
             cerr << param << " is not a valid parameter" << endl;
     }
 
+    if (!filesystem::exists("./results/" + filepath))
+    {
+        filesystem::create_directory("./results/" + filepath);
+    }
+
     NewickTree tree1(species, seed);
     tree1.setBranchLengths(b_length);
     tree1.printNewick(true);
     tree1.generateSequences(seqlen);
-    tree1.exportNexus("results/" + filepath + to_string(seed) + ".nex");
-    tree1.exportNewick("results/" + filepath + to_string(seed) + "_tree.txt", true);
-    cout << "exported results to " << to_string(seed) << endl;
+    tree1.exportNexus("./results/" + filepath + to_string(seed) + ".nex", true);
+    tree1.exportNewick("./results/" + filepath + to_string(seed) + "_tree.txt", true);
+    cout << "exported results to "
+         << "./results/" + filepath + to_string(seed) << endl;
 }
