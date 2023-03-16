@@ -45,3 +45,4 @@ treeanalysis/analysis/
 # debugging and documentation
 *.dSYM
 Doxyfile
+documentation/

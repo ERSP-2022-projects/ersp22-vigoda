@@ -1,12 +1,12 @@
 #Nexus
 begin mrbayes;
+    set autoclose=yes nowarn=yes quitonerror=yes;
+    log start filename=<log_filename> replace; 
     execute <input_filename>;
     lset nst=<nst> rates=<rates>;
     mcmc ngen=<ngen> samplefreq=<samplefreq> nchains=<nchains> nruns=<nruns> printfreq=<printfreq> diagnfreq=<diagnfreq> stoprule=yes stopval = <stopval>;
     sumt burnin=<burnin> relburnin=yes;
-    sump burnin=<burnin> relburnin=yes standarddeviation=yes;
-    log likelihood;
-    log <log_filename>;
-    set autoclose=yes nowarn=yes;
+    sump burnin=<burnin> relburnin=yes;
+    log stop;
     quit;
 end;

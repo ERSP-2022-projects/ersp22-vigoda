@@ -10,7 +10,7 @@
 #include <random>
 #include <stdexcept>
 using namespace std;
-
+// ACTUALLY JUST GENERATES A DEFAULT BRANCH LENGTH
 double NewickTree::TreeNode::randomBranchLength()
 {
     // generate random branch length subject to alpha and beta set for given tree
@@ -218,6 +218,23 @@ void NewickTree::exportNewick(string filename, bool leafOnly)
     treefile << ";";
     treefile.close();
 }
+
+void NewickTree::exportSummary(string filename, bool leafOnly)
+{
+    ofstream treefile;
+    treefile.open(filename);
+    vector<string> symbols;
+    newickDFS(root, symbols, leafOnly);
+    treefile << "topology = ";
+    for (string symbol : symbols)
+    {
+        treefile << symbol;
+    }
+    treefile << ";" << endl;
+    treefile << "internal branch length = " << internalBranchLength << endl;
+    treefile << "terminal branch length = " << terminalBranchLength << endl;
+    treefile.close();
+}
 NewickTree::TreeNode *NewickTree::importDFS(TreeNode *parent, string &newickString, int &pos)
 {
     // pos should be position before current node
@@ -310,22 +327,12 @@ Eigen::MatrixXd NewickTree::calcTransition(double branchLength)
 }
 void NewickTree::setBranchLengths(double branchLength)
 {
-    queue<TreeNode *> next;
-    next.push(root);
-    while (next.size() > 0)
-    {
-        TreeNode *curr = next.front();
-        next.pop();
-        for (int i = 0; i < curr->childrenCount(); i++)
-        {
-            TreeBranch childBranch = (curr->children)[i];
-            next.push(childBranch.to);
-            (curr->children)[i].length = branchLength;
-        }
-    }
+    setInternalLengths(branchLength);
+    setTerminalLengths(branchLength);
 }
 void NewickTree::setInternalLengths(double branchLength)
 {
+    internalBranchLength = branchLength;
     queue<TreeNode *> next;
     next.push(root);
     while (next.size() > 0)
@@ -346,6 +353,7 @@ void NewickTree::setInternalLengths(double branchLength)
 }
 void NewickTree::setTerminalLengths(double branchLength)
 {
+    terminalBranchLength = branchLength;
     queue<TreeNode *> next;
     next.push(root);
     while (next.size() > 0)
@@ -431,7 +439,7 @@ void NewickTree::toNexus(string filename, map<string, string> sequences, vector<
     file.open(filename);
     file << "begin data;" << endl;
     file << "dimensions ntax=" << sequences.size() << " nchar=" << sequences.begin()->second.size() << ";" << endl;
-    file << "format datatype=dna interleave=no gap=-;" << endl;
+    file << "format datatype=dna interleave=no gap=- missing=?;" << endl;
     file << "matrix" << endl;
     // allows you to process
     vector<pair<string, string>> ordered_sequences;

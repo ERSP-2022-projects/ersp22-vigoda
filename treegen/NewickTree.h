@@ -129,6 +129,13 @@ public:
      */
     void exportNexus(string filename, bool numericSort = false);
     /**
+     * Stores the current tree topology in Newick format and the internal and terminal branch lengths to a file.
+     *
+     * @param filename The file to store the tree topology in.
+     * @param leafOnly Only print the leaf nodes in the tree (True by default).
+     */
+    void exportSummary(string filename, bool leafOnly = true);
+    /**
      * Sets rate matrix for tree to calculate transition matrices from.
      * @param rateMatrix The intended rate matrix for this tree (0.1 on all off-diagonal elements and -0.3 on diagonal elements by default).
      */
@@ -174,6 +181,8 @@ public:
 private:
     static int createdCount;
     int sequenceLength;
+    double internalBranchLength;
+    double terminalBranchLength;
     TreeNode *root;
     map<char, int> nucToIndex;
     map<int, char> indexToNuc;

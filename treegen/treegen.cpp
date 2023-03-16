@@ -1,6 +1,8 @@
 #include "tree.h"
 #include "NewickTree.h"
 #include <iostream>
+#include <fstream>
+#include <iomanip>
 #include <random>  // for random_device and uniform_int_distribution
 #include <cstdint> // for uint64_t
 #include <ctime>   // for time
@@ -15,7 +17,6 @@ int main(int argc, char **argv)
     uint64_t seed = dist(rd);  // default seed = time % 1M
     int species = 10;          // default # species = 10
     int seqlen = 1000;         // default sequence length = 1000
-    double p_mutate = 0.2;     // default mutation probability = 0.2
     mutation_model smm = jc69; // default site mutation model = jc69
     double b_length = 0.1;
     string filepath = "";
@@ -56,13 +57,18 @@ int main(int argc, char **argv)
     {
         filesystem::create_directory("./results/" + filepath);
     }
-
+    if (filepath.size() != 0 && filepath.back() != '/')
+    {
+        filepath.push_back('/');
+    }
     NewickTree tree1(species, seed);
     tree1.setBranchLengths(b_length);
     tree1.printNewick(true);
     tree1.generateSequences(seqlen);
     tree1.exportNexus("./results/" + filepath + to_string(seed) + ".nex", true);
-    tree1.exportNewick("./results/" + filepath + to_string(seed) + "_tree.txt", true);
+    tree1.exportSummary("./results/" + filepath + to_string(seed) + "_tree.txt", true);
     cout << "exported results to "
          << "./results/" + filepath + to_string(seed) << endl;
+    cout << "file prefix: "
+         << to_string(seed) << endl;
 }
