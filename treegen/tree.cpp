@@ -1,5 +1,4 @@
 #include "tree.h"
-#include <fstream>
 #include <stack>
 using namespace std;
 
@@ -18,7 +17,7 @@ void Tree::generateTopology() {
     }
 }
 
-void Tree::dfsSequenceGen() {
+void Tree::dfsSequenceGen(double p_mutate, mutation_model smm) {
     uint64_t seed = init(orig + 2);
     stack<int> s;
     bool visited[2 * species - 2];
@@ -44,6 +43,16 @@ void Tree::dfsSequenceGen() {
                     }
                 }
             }
+        }
+    }
+}
+
+void Tree::dropData(double pct_missing) {
+    uint64_t seed = init(orig + 3);
+    for (int node = 0; node < 2 * species - 2; node++) {
+        if (!vertices[node].isLeaf) continue;
+        for (int c = 0; c < seqlen; c++) {
+            if (nextFloat(&seed) < pct_missing) sequences[node][c] = -1;
         }
     }
 }

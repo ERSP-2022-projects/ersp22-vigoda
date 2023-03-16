@@ -3,6 +3,7 @@
 
 #include "mutationmodels.h"
 #include <vector>
+#include <fstream>
 using namespace std;
 
 struct Vertex {
@@ -26,8 +27,6 @@ class Tree {
     private:
         uint64_t orig;
         int species, seqlen;
-        double p_mutate;
-        mutation_model smm;
         vector<vector<int> > sequences;
         vector<Vertex> vertices;
         vector<Edge> edges;
@@ -35,13 +34,14 @@ class Tree {
         void recursiveNewick(string& newick, int id, bool* visited);
 
     public:
-        Tree(uint64_t seed, const int species, const int seqlen, double p_mutate, mutation_model smm) : 
-            orig(seed), species(species), seqlen(seqlen), p_mutate(p_mutate), smm(smm),
+        Tree(uint64_t seed, const int species, const int seqlen) : 
+            orig(seed), species(species), seqlen(seqlen),
             vertices(2 * species - 2), edges(2 * species - 3) {
                 sequences = vector<vector<int>>(2 * species - 2, vector<int>(seqlen));
             }
         void generateTopology();
-        void dfsSequenceGen();
+        void dfsSequenceGen(double p_mutate, mutation_model smm);
+        void dropData(double pct_missing);
         void writeToNexus();
         string toNewick();
 };

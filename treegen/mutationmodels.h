@@ -17,7 +17,7 @@ static inline char convert_nucleotide(int id) {
         return 'G'; // pairs C, purine
     if (id == 3)
         return 'C'; // pairs G, pyrimidine
-    return '-';
+    return '-'; // unknown or missing data
 }
 
 static inline int roll_nucleotide(mutation_model smm, uint64_t* seed) {

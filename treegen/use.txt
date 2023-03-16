@@ -7,5 +7,6 @@ params are:
     nchar/seqlen/N=int
     p_mutate/p=double
     mutation_model/smm=str
+    drop/missing/pctmissing=double
 
 note: mrbayes stores newick format in [data].nex.trprobs

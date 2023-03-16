@@ -8,6 +8,8 @@ int main(int argc, char **argv) {
     int seqlen = 1000;                  // default sequence length = 1000
     double p_mutate = 0.2;              // default mutation probability = 0.2
     mutation_model smm = jc69;          // default site mutation model = jc69
+    bool missing_data = false;          // default no missing data
+    double missing_pct = 0;              // ^
     for (int i = 1; i < argc; i++) {
         string arg = argv[i];
         int eq = arg.find('=');
@@ -27,17 +29,28 @@ int main(int argc, char **argv) {
             p_mutate = stod(after);
         else if (param == "smm" || param == "mutation_model")
             smm = stomm(after);
+        else if (param == "drop" || param == "missing" || param == "pctmissing") {
+            missing_data = true;
+            missing_pct = stod(after);
+        }
         else
             cerr << param << " is not a valid parameter" << endl;
     }
 
-    Tree tree(seed, species, seqlen, p_mutate, smm);
+    Tree tree(seed, species, seqlen);
     tree.generateTopology();
-    tree.dfsSequenceGen();
+    tree.dfsSequenceGen(p_mutate, smm);
+    if (missing_data) tree.dropData(missing_pct);
     tree.writeToNexus();
 
-    cout << tree.toNewick() << endl;
-    cout << "exported results for " << to_string(seed) << endl;
+    ofstream outfile;
+    outfile.open("sumt.txt");
+    outfile << endl;
+    outfile << "seed: " << seed << endl;
+    outfile << "pct missing: " << missing_pct << endl;
+    outfile << "original tree: " << tree.toNewick() << endl;
+    outfile << "trials: " << endl;
+    outfile.close();
 
     return 0;
 }
