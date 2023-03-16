@@ -411,7 +411,16 @@ def remove_characters(infilename, outfilename, probability):
 '''
 
 '''
-def missing_character_wrapper(num_samples, percentages, test_dir_name, species = [10], seqlen = [10000], b_length = 0.2, character_directory=None):
+def missing_character_wrapper(num_samples, percentages, test_dir_name = None, species = [10], seqlen = [10000], b_length = 0.2, character_directory=None):
+
+    if (test_dir_name == None):
+        test_dir_name = str(num_samples) + "_"
+        for parameter, label in [(percentages, 'p'), (species, 'sp'), (seqlen, 'sl')]:
+            test_dir_name += label + '-'
+            for value in parameter:
+                test_dir_name += str(value)
+            test_dir_name += '_'
+        test_dir_name += 'b-' + str(b_length)
     mrbayes_params = {
         "ngen": 1000000,
         "samplefreq": 100,
@@ -512,7 +521,7 @@ Returns:
 
 
 def main():
-    missing_character_wrapper(num_samples=1, percentages=[0.8], test_dir_name='test2analysis', species = [10], seqlen = [10000], b_length = 0.2, character_directory="test1")
+    missing_character_wrapper(num_samples=1, percentages=[0.8], species = [10], seqlen = [10000], b_length = 0.2, character_directory="test1")
 
 def fake_main():
     seqlen_wrapper("misc", seqlen=1000, numSamples=3)
