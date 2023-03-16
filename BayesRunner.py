@@ -109,12 +109,7 @@ def generate_mrbayes_script(nexus_filepath, target_directory=None,
                             printfreq=100, diagnfreq=100,
                             stopval=0.00001, burnin=250, nst=6,
                             rates="gamma", addToNexusFile=True):
-    
-
-
     input_filename = os.path.basename(nexus_filepath)
-
-    print('input filename:', input_filename)
     prefix = input_filename.split("_")[0]
 
     # Create the directory inside the analysis folder
@@ -182,7 +177,6 @@ def generate_mrbayes_script(nexus_filepath, target_directory=None,
     else:
         with open(output_filepath, "w") as script_file:
             script_file.write(script)
-    print('output f', output_filepath)
     return output_filepath
 
 '''
