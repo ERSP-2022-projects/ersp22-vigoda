@@ -56,14 +56,6 @@ def treegen(species=10, seqlen=1000, p_mutate=0.2,
     raise FileNotFoundError(
         f"The file with prefix: '{prefix}' does not exist in results directory")
 
-def generate_Mixture(filepath1 = None,filepath2=None,
-                     species=10, seqlen=1000, p_mutate=0.2,
-                    mutation_model="jc69", seed=None):
-    pass
-    # if filepath1 != None:
-        
-    
-
 
 def generate_mrbayes_script(nexus_filepath, target_directory=None,
                             output_filepath=None, ngen=5000,
