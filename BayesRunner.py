@@ -116,7 +116,7 @@ def generate_mrbayes_script(nexus_filepath, target_directory=None,
     script = template
     if addToNexusFile == False:
         script = script.replace("<input_filename>", nexus_filepath)
-    log_filename = os.path.basename(nexus_filepath)
+    log_filename = os.path.splitext(os.path.basename(nexus_filepath))[0] + "_log"
     script = script.replace("<log_filename>", log_filename)
     script = script.replace("<ngen>", str(ngen))
     script = script.replace("<samplefreq>", str(samplefreq))
