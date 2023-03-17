@@ -1,0 +1,13 @@
+library(ape)
+library(TreeDist)
+tree1 <- read.tree(text = '
+
+();
+
+')
+tree2 <- read.tree(text = '
+
+();
+
+')
+cat("dist: ", TreeDistance(tree1, tree2))

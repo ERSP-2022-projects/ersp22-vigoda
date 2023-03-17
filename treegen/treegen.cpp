@@ -44,13 +44,17 @@ int main(int argc, char **argv) {
     tree.writeToNexus();
 
     ofstream outfile;
-    outfile.open("sumt.txt");
+    outfile.open("sumt.txt", ofstream::app);
     outfile << endl;
     outfile << "seed: " << seed << endl;
     outfile << "pct missing: " << missing_pct << endl;
     outfile << "original tree: " << tree.toNewick() << endl;
     outfile << "trials: " << endl;
     outfile.close();
+
+    cout << "execute /Users/katytsao/Documents/GitHub/ersp22-vigoda/treegen/results/" << seed << "_data.nex" << endl;
+    cout << "mcmc ngen=5000 printfreq=1000 diagnfreq=100 samplefreq=20" << endl;
+    cout << "./resultreader.out " << seed << " 50" << endl;
 
     return 0;
 }
