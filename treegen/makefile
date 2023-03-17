@@ -3,14 +3,14 @@ default: treegen
 all: treegen generateMixture
 
 treegen: treegen.cpp tree.o NewickTree.o
-	g++ --std=c++17 -I /opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 -g treegen.cpp tree.o NewickTree.o -o treegen.out
+	g++ --std=c++17 -I "C:\Eigen" -g treegen.cpp tree.o NewickTree.o -o treegen.out
 	mkdir -p results
 
 NewickTree.o: NewickTree.cpp NewickTree.h
-	g++ --std=c++17 -c -I /opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 NewickTree.cpp 
+	g++ --std=c++17 -c -I "C:\Eigen" NewickTree.cpp 
 
 generateMixture: generateMixture.cpp NewickTree.o
-	g++ --std=c++17 -I /opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 generateMixture.cpp NewickTree.o -o generateMixture.out
+	g++ --std=c++17 -I "C:\Eigen" generateMixture.cpp NewickTree.o -o generateMixture.out
 
 newicktest: newicktest.cpp NewickTree.o
 	g++ --std=c++17 -g newicktest.cpp NewickTree.o -o newicktest
@@ -19,13 +19,13 @@ tree.o: tree.h tree.cpp
 	g++ --std=c++17 -c -g tree.cpp
 
 EigenTest: EigenTest.cpp
-	g++ --std=c++11 -I /opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 EigenTest.cpp -o EigenTest.out
+	g++ --std=c++11 -I "C:\Eigen" EigenTest.cpp -o EigenTest.out
 
 debugGenerateMixture: generateMixture.cpp NewickTree.o
 	g++ --std=c++17 -g generateMixture.cpp NewickTree.o -o debugGenerateMixture.out
 
 varyBranchLength: varyBranchLength.cpp NewickTree.o
-	g++ --std=c++17 -O3 -I /opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 varyBranchLength.cpp NewickTree.o -o varyBranchLength.out
+	g++ --std=c++17 -O3 -I "C:\Eigen" varyBranchLength.cpp NewickTree.o -o varyBranchLength.out
 
 clean: 
 	rm -f *.o

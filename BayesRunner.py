@@ -252,7 +252,7 @@ def generateAndRun(**kwargs):
     }
     script_filepath = generate_mrbayes_script(
         **{k: v for k, v in generate_mrbayes_script_params.items() if v is not None})
-    print('script filepath:', script_filepath)
+    print_timestamped('script filepath:', script_filepath)
     output, error, dir_path = run_mrbayes(script_filepath)
     return dir_path
 
@@ -368,7 +368,7 @@ def extract_data_seed(file_path):
 # note that prefix contains just the generating seed and not any percentage values
 def extract_data_gen(file_path):
     # extract the prefix number tag from the file name
-    print(file_path)
+    print_timestamped(file_path)
     file_path = os.path.normpath(file_path)
     prefix = re.findall(r'^(\d+)', os.path.basename(file_path))[0]
 
@@ -521,7 +521,7 @@ Returns:
 
 
 def main():
-    missing_character_wrapper(num_samples=1, percentages=[0.8], species = [10], seqlen = [10000], b_length = 0.2, character_directory="test1")
+    missing_character_wrapper(num_samples=25, percentages=[0.0,0.2,0.4,0.6,0.8], species = [100], seqlen = [10000], b_length = 0.2, character_directory="test2")
 
 def fake_main():
     seqlen_wrapper("misc", seqlen=1000, numSamples=3)

@@ -38,7 +38,7 @@ int main(int argc, char **argv)
         else if (param == "nchar" || param == "seqlen" || param == "length" || param == "N")
             seqlen = stoi(after);
         else if (param == "p" || param == "p_mutate")
-            p_mutate = stod(after);
+            b_length = stod(after);
         else if (param == "smm" || param == "mutation_model")
             smm = stomm(after);
         else if (param == "bl" || param == "branch_length")
