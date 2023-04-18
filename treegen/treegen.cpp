@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
     }
 
     Tree tree(seed, species, seqlen, p_mutate, smm);
-    tree.generateTopology();
+    tree.generateRandomTopology();
     tree.dfsSequenceGen();
     tree.writeToNexus();
 

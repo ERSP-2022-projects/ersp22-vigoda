@@ -32,6 +32,7 @@ class Tree {
         vector<Vertex> vertices;
         vector<Edge> edges;
         
+        void makeVertices();
         void recursiveNewick(string& newick, int id, bool* visited);
 
     public:
@@ -39,11 +40,15 @@ class Tree {
             orig(seed), species(species), seqlen(seqlen), p_mutate(p_mutate), smm(smm),
             vertices(2 * species - 2), edges(2 * species - 3) {
                 sequences = vector<vector<int>>(2 * species - 2, vector<int>(seqlen));
+                makeVertices();
             }
-        void generateTopology();
+        void generateRandomTopology();
+        void generateTopology(vector<int> edgearr);
         void dfsSequenceGen();
+        void mixSequences(Tree& tree1, Tree& tree2);
         void writeToNexus();
         string toNewick();
+        void printEdges();
 };
 
 #endif

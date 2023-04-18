@@ -3,18 +3,30 @@
 #include <stack>
 using namespace std;
 
-void Tree::generateTopology() {
+void Tree::makeVertices() {
+    for (int i = 0; i < species; i++) {
+        vertices[i] = Vertex(to_string(i+1));
+    }
+}
+
+void Tree::generateRandomTopology() {
     uint64_t seed = init(orig + 1);
-    vertices[0] = Vertex("1");
-    vertices[1] = Vertex("2");
     edges[0] = Edge(0, 1);
     for (int i = 2; i < species; i++) {
-        vertices[2 * i - 2] = Vertex(to_string(i+1));
-        vertices[2 * i - 1] = Vertex();
-        edges[2 * i - 3] = Edge(2 * i - 2, 2 * i - 1);
+        edges[2 * i - 3] = Edge(i, species+i-2);
         int e = nextInt(&seed, 2 * i - 4);
-        edges[2 * i - 2] = Edge(2 * i - 1, edges[e].v2);
-        edges[e].v2 = 2 * i - 1;
+        edges[2 * i - 2] = Edge(species+i-2, edges[e].v2);
+        edges[e].v2 = species+i-2;
+    }
+}
+
+void Tree::generateTopology(vector<int> edgearr) {
+    if (edgearr.size() != 4 * species - 6) {
+        cerr << "# of edges does not match" << endl;
+        return;
+    }
+    for (int i = 0; i < 2 * species - 3; i++) {
+        edges[i] = Edge(edgearr[2*i]-1,edgearr[2*i+1]-1);
     }
 }
 
@@ -48,6 +60,16 @@ void Tree::dfsSequenceGen() {
     }
 }
 
+void Tree::mixSequences(Tree& tree1, Tree& tree2) {
+    uint64_t seed = init(orig + 3);
+    for (int c = 0; c < seqlen; c++) {
+        Tree use = (nextFloat(&seed) < 0.5) ? tree1 : tree2;
+        for (int i = 0; i < 2 * species - 2; i++) {
+            sequences[i][c] = use.sequences[i][c];
+        }
+    }
+}
+
 void Tree::writeToNexus() {
     // filesystem::create_directory("results/" + to_string(orig));
     ofstream file;
@@ -56,8 +78,7 @@ void Tree::writeToNexus() {
     file << "dimensions ntax=" << species << " nchar=" << seqlen << ";" << endl;
     file << "format datatype=dna interleave=no gap=-;" << endl;
     file << "matrix" << endl;
-    for (int v = 0; v < 2 * species - 2; v++) {
-        if (!vertices[v].isLeaf) continue;
+    for (int v = 0; v < species; v++) {
         file << vertices[v].name << "\t";
         for (int i = 0; i < seqlen; i++) file << convert_nucleotide(sequences[v][i]);
         file << endl;
@@ -71,7 +92,7 @@ string Tree::toNewick() {
     string newick = "";
     bool visited[2 * species - 2];
     for (int i = 0; i < 2 * species - 2; i++) visited[i] = false;
-    recursiveNewick(newick, 3, visited);
+    recursiveNewick(newick, species, visited);
     return newick;
 }
 
@@ -93,4 +114,10 @@ void Tree::recursiveNewick(string& newick, int id, bool* visited) {
             }
             newick += ")";
         }
+}
+
+void Tree::printEdges() {
+    for (int i = 0; i < 2 * species - 3; i++) {
+        cout << (edges[i].v1+1) << ", " << (edges[i].v2+1) << endl;
+    }
 }
