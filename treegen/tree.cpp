@@ -30,6 +30,17 @@ void Tree::generateTopology(vector<int> edgearr) {
     }
 }
 
+void Tree::copyTopology(Tree& tree) {
+    if (tree.species != species) {
+        cerr << "# of leaves/edges does not match" << endl;
+        return;
+    }
+    this->edges = tree.edges;
+    // for (int i = 0; i < 2 * species - 3; i++) {
+    //     edges[i] = Edge(tree.edges[i].v1, tree.edges[i].v2);
+    // }
+}
+
 void Tree::dfsSequenceGen() {
     uint64_t seed = init(orig + 2);
     stack<int> s;
@@ -60,10 +71,10 @@ void Tree::dfsSequenceGen() {
     }
 }
 
-void Tree::mixSequences(Tree& tree1, Tree& tree2) {
+void Tree::mixSequences(vector<Tree> trees) {
     uint64_t seed = init(orig + 3);
     for (int c = 0; c < seqlen; c++) {
-        Tree use = (nextFloat(&seed) < 0.5) ? tree1 : tree2;
+        Tree use = trees[nextInt(&seed, trees.size())];
         for (int i = 0; i < 2 * species - 2; i++) {
             sequences[i][c] = use.sequences[i][c];
         }

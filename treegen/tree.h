@@ -44,8 +44,9 @@ class Tree {
             }
         void generateRandomTopology();
         void generateTopology(vector<int> edgearr);
+        void copyTopology(Tree& tree);
         void dfsSequenceGen();
-        void mixSequences(Tree& tree1, Tree& tree2);
+        void mixSequences(vector<Tree> trees);
         void writeToNexus();
         string toNewick();
         void printEdges();
