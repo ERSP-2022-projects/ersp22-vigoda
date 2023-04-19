@@ -25,11 +25,7 @@ int main(int argc, char *argv[])
     int numLeafs = 10;
     int sequenceLength = 4000;
 
-    if (argc <= 1)
-    {
-        numLeafs = numLeafs;
-    }
-    else
+    if (argc > 1)
     {
         numLeafs = stoi(argv[1]);
     }

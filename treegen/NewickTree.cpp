@@ -10,11 +10,18 @@
 #include <random>
 #include <stdexcept>
 using namespace std;
-// ACTUALLY JUST GENERATES A DEFAULT BRANCH LENGTH
-double NewickTree::TreeNode::randomBranchLength()
+double NewickTree::TreeNode::randomBranchLength(double lowerBound = 1e-5, double upperBound = 5)
 {
-    // generate random branch length subject to alpha and beta set for given tree
-    return 0.1;
+    // generate random branch length from gamma distribution
+    random_device rd;
+    mt19937 mt(rd());
+    gamma_distribution<double> dist(1, 0.1);
+    double bl = dist(mt);
+    while (bl > lowerBound || bl < upperBound)
+    {
+        bl = dist(mt);
+    }
+    return bl;
 }
 
 NewickTree::TreeNode *NewickTree::TreeNode::addChild(string n)

@@ -9,6 +9,8 @@ from datetime import datetime
 import random
 import dendropy
 from dendropy.calculate import treecompare
+
+
 @contextmanager
 def cwd(path):
     oldpwd = os.getcwd()
@@ -19,11 +21,12 @@ def cwd(path):
         os.chdir(oldpwd)
 
 
-
 def print_timestamped(*args, **kwargs):
     now = datetime.now()
     timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
     print(f"[{timestamp}]", *args, **kwargs)
+
+
 '''
 Generates a single tree topology and the accompanying character sequence by calling treegen.out. Results in a .nex 
 file corresponding to the character sequence and a .txt file corresponding to the generated tree topology in Newick format.
@@ -40,8 +43,10 @@ Args:
 Returns:
     (string): path to generated nexus file with genetic character sequences
 '''
+
+
 def treegen(species=10, seqlen=1000, b_length=0.2,
-            mutation_model="jc69", seed=None, results_directory = None):
+            mutation_model="jc69", seed=None, results_directory=None):
     # set the path to the C++ executable and the command-line arguments
     executable = r"./treegen.out"
     treegen_directory = r"./treegen/"
@@ -52,28 +57,29 @@ def treegen(species=10, seqlen=1000, b_length=0.2,
 
     else:
         relative_results = results_directory
-        results_directory = os.path.join("./treegen/results", results_directory)
+        results_directory = os.path.join(
+            "./treegen/results", results_directory)
     if (not os.path.isdir(results_directory)):
         os.makedirs(results_directory)
-    
+
     # run the C++ executable with the specified arguments
-    command = [executable, 
-                f"species={species}",
-                f"seqlen={seqlen}", 
-                f"b_length={b_length}",
-                f"mutation_model={mutation_model}",
-                f"filepath={relative_results}"]
+    command = [executable,
+               f"species={species}",
+               f"seqlen={seqlen}",
+               f"b_length={b_length}",
+               f"mutation_model={mutation_model}",
+               f"filepath={relative_results}"]
     if seed is not None:
         command.append(f"seed={seed}")
-        
-    #change directories and run 
+
+    # change directories and run
     with cwd(treegen_directory):
         process = subprocess.run(
             command, capture_output=True)
-        
+
     stdout = (process.stdout).decode()
     stderr = (process.stderr).decode()
-        
+
     # get the prefix of the newly created NEXUS file
     prefix = (stdout).split('\n')[-2].split()[-1]
 
@@ -84,13 +90,13 @@ def treegen(species=10, seqlen=1000, b_length=0.2,
     raise FileNotFoundError(
         f"The file with prefix: '{prefix}' does not exist in results directory")
 
-def generate_Mixture(filepath1 = None,filepath2=None,
+
+def generate_Mixture(filepath1=None, filepath2=None,
                      species=10, seqlen=1000, b_length=0.2,
-                    mutation_model="jc69", seed=None):
+                     mutation_model="jc69", seed=None):
     pass
     # if filepath1 != None:
-        
-    
+
 
 '''
 Generate NEXUS file containing the following:
@@ -103,6 +109,8 @@ Args:
     output_filepath (string): filepath to store final MrBayes script in (this is actually a file)
 
 '''
+
+
 def generate_mrbayes_script(nexus_filepath, target_directory=None,
                             output_filepath=None, ngen=5000,
                             samplefreq=100, nchains=1, nruns=2,
@@ -156,7 +164,8 @@ def generate_mrbayes_script(nexus_filepath, target_directory=None,
     script = template
     if addToNexusFile == False:
         script = script.replace("<input_filename>", nexus_filepath)
-    log_filename = os.path.splitext(os.path.basename(nexus_filepath))[0] + "_log.txt"
+    log_filename = os.path.splitext(os.path.basename(nexus_filepath))[
+        0] + "_log.txt"
     script = script.replace("<log_filename>", log_filename)
     script = script.replace("<ngen>", str(ngen))
     script = script.replace("<samplefreq>", str(samplefreq))
@@ -179,6 +188,7 @@ def generate_mrbayes_script(nexus_filepath, target_directory=None,
             script_file.write(script)
     return output_filepath
 
+
 '''
 runs MrBayes from a given script
 Args:
@@ -194,23 +204,24 @@ Returns:
 def run_mrbayes(script_filepath, directory=None):
     script_filepath = os.path.normpath(os.path.abspath(script_filepath))
     assert os.path.isfile(script_filepath), f"script_filepath doesn't exist"
-    
+
     if directory == None:
         directory = os.path.dirname(script_filepath)
     if (len(script_filepath) >= 99):
-        short_filepath = os.path.relpath(script_filepath,start = directory)
+        short_filepath = os.path.relpath(script_filepath, start=directory)
         script_filepath = short_filepath
     directory = os.path.normpath(directory)
-    
-    #mrBayes only takes filepaths of max length 100 
-    #so this replaces filepaths with a short relative filepath
-        
-    command = ["mb", script_filepath]    
-    with cwd(directory):  
+
+    # mrBayes only takes filepaths of max length 100
+    # so this replaces filepaths with a short relative filepath
+
+    command = ["mb", script_filepath]
+    with cwd(directory):
         process = subprocess.run(
             command, capture_output=True)
 
     return (process.stdout, process.stderr, directory)
+
 
 '''
 Generates/takes in a single NEXUS file with genetic character sequenes and runs MrBayes on it.
@@ -219,6 +230,8 @@ Args:
 Returns:
     (string): filepath to MrBayes output
 '''
+
+
 def generateAndRun(**kwargs):
 
     nexus_filepath = kwargs.get('nexus_filepath', None)
@@ -252,11 +265,13 @@ def generateAndRun(**kwargs):
     }
     script_filepath = generate_mrbayes_script(
         **{k: v for k, v in generate_mrbayes_script_params.items() if v is not None})
-    print_timestamped('script filepath:', script_filepath)
+    print('script filepath:', script_filepath)
     output, error, dir_path = run_mrbayes(script_filepath)
     return dir_path
 
-# 
+#
+
+
 def CreateAndAnalyze(numSamples, test_dir_name="misc", **kwargs):
     analysis_directory = r"./treeanalysis/analysis"
     target_directory = os.path.join(analysis_directory, test_dir_name)
@@ -275,14 +290,18 @@ def CreateAndAnalyze(numSamples, test_dir_name="misc", **kwargs):
 
 def extract_results(extract_from_directory):
     output_directory = extract_from_directory
-    extract_from_directory = os.path.join(os.path.normpath(extract_from_directory), 'data')
-    table = extract_data_from_directory(extract_from_directory, output_directory=output_directory)
+    extract_from_directory = os.path.join(
+        os.path.normpath(extract_from_directory), 'data')
+    table = extract_data_from_directory(
+        extract_from_directory, output_directory=output_directory)
     print_timestamped(f"{table=}")
 
 # (WIP) needs to include branch length, percentage of characters removed, ntaxa, nchars, seed, swap seed, distance from correct tree
 # need some way to ensure that same data points are not recorded multiple times
 # primary
-def extract_data_from_directory(target_directory, output_directory = None, output_filename="_results.csv"):
+
+
+def extract_data_from_directory(target_directory, output_directory=None, output_filename="_results.csv"):
     if output_directory == None:
         output_directory = target_directory
     # create an empty list to store the data
@@ -296,27 +315,34 @@ def extract_data_from_directory(target_directory, output_directory = None, outpu
             # seed is stored as first sequence before any percentage markers (e.g. 1234_50.nex
             # has a seed of 1234 and a percentage (removed) of 50)
             if (file_name_prefix.find('_') != -1):
-                file_name_seed = file_name_prefix[ : file_name_prefix.find('_')]
-                percentage = file_name_prefix[file_name_prefix.find('_') + 1 : ]
+                file_name_seed = file_name_prefix[: file_name_prefix.find('_')]
+                percentage = file_name_prefix[file_name_prefix.find('_') + 1:]
             else:
                 file_name_seed = file_name_prefix
                 percentage = str(100)
 
             mcmc_file_path = os.path.join(target_directory, file_name)
-            trprobs_file_path = os.path.join(target_directory, file_name_prefix + '.nex.trprobs')
-            log_file_path = os.path.join(target_directory, file_name_prefix + '_log.txt')
-            tree_file_path = os.path.join(target_directory, file_name_seed + '_tree.txt')
+            trprobs_file_path = os.path.join(
+                target_directory, file_name_prefix + '.nex.trprobs')
+            log_file_path = os.path.join(
+                target_directory, file_name_prefix + '_log.txt')
+            tree_file_path = os.path.join(
+                target_directory, file_name_seed + '_tree.txt')
             # extract the relevant data and add it to the data_list
             prefix, gen_num, std_dev = extract_data_gen(mcmc_file_path)
             predicted_tree = extract_data_predicted_tree(trprobs_file_path)
-            generating_tree, internal_b_length, terminal_b_length = extract_data_generating_tree(tree_file_path)
+            generating_tree, internal_b_length, terminal_b_length = extract_data_generating_tree(
+                tree_file_path)
             tns = dendropy.TaxonNamespace()
-            p_tree = dendropy.Tree.get(data = predicted_tree, schema='newick', taxon_namespace=tns)
-            g_tree = dendropy.Tree.get(data = generating_tree, schema='newick', taxon_namespace = tns)
-            #implements unweighted Robinson-Foulds distance
+            p_tree = dendropy.Tree.get(
+                data=predicted_tree, schema='newick', taxon_namespace=tns)
+            g_tree = dendropy.Tree.get(
+                data=generating_tree, schema='newick', taxon_namespace=tns)
+            # implements unweighted Robinson-Foulds distance
             distance = treecompare.symmetric_difference(p_tree, g_tree)
             seed, swapseed = extract_data_seed(log_file_path)
-            data_list.append([file_name_prefix, percentage, internal_b_length, terminal_b_length, seed, swapseed, gen_num, std_dev, distance])
+            data_list.append([file_name_prefix, percentage, internal_b_length,
+                             terminal_b_length, seed, swapseed, gen_num, std_dev, distance])
 
     # convert the data_list to a numpy array
     data_array = np.array(data_list)
@@ -334,19 +360,25 @@ def extract_data_from_directory(target_directory, output_directory = None, outpu
     # return the data_array
     return data_array
 # parses generating tree topology and branch lengths from _tree.txt file
+
+
 def extract_data_generating_tree(file_path):
     with open(file_path, 'r') as file:
         content = file.readlines()
-    tokens = ['topology = ', 'internal branch length = ', 'terminal branch length = ']
+    tokens = ['topology = ', 'internal branch length = ',
+              'terminal branch length = ']
     for index, token in enumerate(tokens):
         if (content[index].find(token) == -1):
-            raise Exception(file_path + " doesn't contain at least one of topology, internal branch length, or terminal branch length")
-    topology = content[0][len(tokens[0]) : ].strip()
-    internal_b_length = content[1][len(tokens[1]) : ].strip()
-    terminal_b_length = content[2][len(tokens[2]) : ].strip()
+            raise Exception(
+                file_path + " doesn't contain at least one of topology, internal branch length, or terminal branch length")
+    topology = content[0][len(tokens[0]):].strip()
+    internal_b_length = content[1][len(tokens[1]):].strip()
+    terminal_b_length = content[2][len(tokens[2]):].strip()
     return topology, internal_b_length, terminal_b_length
 
 # parses highest probability tree from .trprobs file
+
+
 def extract_data_predicted_tree(file_path):
     with open(file_path, 'r') as file:
         for line in file:
@@ -355,20 +387,24 @@ def extract_data_predicted_tree(file_path):
     return ''
 
 # parses seed data from _log.txt file
+
+
 def extract_data_seed(file_path):
     with open(file_path, 'r') as file:
         for line in file:
             if (line.find('Seed = ') != -1):
-                seed = int(line[line.find('Seed = ') + 7 : ])
+                seed = int(line[line.find('Seed = ') + 7:])
             if (line.find('Swapseed = ') != -1):
-                swapseed = int(line[line.find('Swapseed = ') + 11: ])
-            
+                swapseed = int(line[line.find('Swapseed = ') + 11:])
+
     return seed, swapseed
 # extract data from .mcmc file
 # note that prefix contains just the generating seed and not any percentage values
+
+
 def extract_data_gen(file_path):
     # extract the prefix number tag from the file name
-    print_timestamped(file_path)
+    print(file_path)
     file_path = os.path.normpath(file_path)
     prefix = re.findall(r'^(\d+)', os.path.basename(file_path))[0]
 
@@ -384,6 +420,7 @@ def extract_data_gen(file_path):
     std_dev = last_row.split('\t')[-1]
 
     return (prefix, gen_num, std_dev)
+
 
 def remove_characters(infilename, outfilename, probability):
     with open(infilename, 'r') as infile:
@@ -403,15 +440,20 @@ def remove_characters(infilename, outfilename, probability):
                     for char in line:
                         charlist.append(char)
                         if char in ['A', 'T', 'G', 'C']:
-                            replace = random.choices([True, False], weights=[probability, 1.0 - probability], k = 1)[0]
+                            replace = random.choices([True, False], weights=[
+                                                     probability, 1.0 - probability], k=1)[0]
                             if (replace):
                                 charlist[-1] = '?'
                     outfile.write(''.join(charlist))
     return outfilename
+
+
 '''
 
 '''
-def missing_character_wrapper(num_samples, percentages, test_dir_name = None, species = [10], seqlen = [10000], b_length = 0.2, character_directory=None):
+
+
+def missing_character_wrapper(num_samples, percentages, test_dir_name=None, species=[10], seqlen=[10000], b_length=0.2, character_directory=None):
 
     if (test_dir_name == None):
         test_dir_name = str(num_samples) + "_"
@@ -438,17 +480,22 @@ def missing_character_wrapper(num_samples, percentages, test_dir_name = None, sp
     for length in seqlen:
         for ntaxa in species:
             for i in range(num_samples):
-                character_filepath = treegen(species = ntaxa, seqlen = length, b_length = b_length, results_directory=character_directory)
+                character_filepath = treegen(
+                    species=ntaxa, seqlen=length, b_length=b_length, results_directory=character_directory)
                 results_directory = os.path.dirname(character_filepath)
-                filename_prefix = os.path.splitext(os.path.basename(character_filepath))[0]
+                filename_prefix = os.path.splitext(
+                    os.path.basename(character_filepath))[0]
 
                 for percentage in percentages:
                     percentage = round(percentage, 2)
-                    suffix = '_' + '{:02d}'.format(int(100 * percentage)) + '.nex'
+                    suffix = '_' + \
+                        '{:02d}'.format(int(100 * percentage)) + '.nex'
                     output_filename = filename_prefix + suffix
-                    sequences_generated.append(remove_characters(character_filepath, os.path.join(results_directory, output_filename), percentage))
+                    sequences_generated.append(remove_characters(character_filepath, os.path.join(
+                        results_directory, output_filename), percentage))
     for sequence in sequences_generated:
-        generateAndRun(nexus_filepath=sequence, target_directory = target_directory, **mrbayes_params)
+        generateAndRun(nexus_filepath=sequence,
+                       target_directory=target_directory, **mrbayes_params)
     # for each nexus file, remove characters
 
     # run mrbayes on all files
@@ -456,6 +503,8 @@ def missing_character_wrapper(num_samples, percentages, test_dir_name = None, sp
     extract_results(target_directory)
 
     pass
+
+
 def seqlen_wrapper(test_dir_name, seqlen, numSamples):
     treegen_params = {
         "species": 20,
@@ -495,6 +544,7 @@ def species_wrapper(test_dir_name, species, numSamples, seqlen=10000):
     print_timestamped(f"Extracting Results in {test_dir_name}")
     print_timestamped(extract_results(test_directory))
 
+
 '''
 takes in a directory of nexus files and a list of percentages
 to remove. Goes through each nexus file and creates a copy with the prefix
@@ -521,7 +571,9 @@ Returns:
 
 
 def main():
-    missing_character_wrapper(num_samples=25, percentages=[0.0,0.2,0.4,0.6,0.8], species = [100], seqlen = [10000], b_length = 0.2, character_directory="test2")
+    missing_character_wrapper(num_samples=1, percentages=[0.8], species=[10], seqlen=[
+                              10000], b_length=0.2, character_directory="test1")
+
 
 def fake_main():
     seqlen_wrapper("misc", seqlen=1000, numSamples=3)

@@ -1,0 +1,15 @@
+#Nexus
+begin mrbayes;
+    execute ..\treegen\results\90889_data.nex;
+    lset nst=6 rates=gamma;
+    mcmc ngen=50000 samplefreq=100 nchains=1 nruns=2 printfreq=1000 stoprule=yes stopval=0.001;
+    sumt burnin=250;
+    sump burnin=250;
+    sumt relburnin=yes;
+    sump relburnin=yes;
+    sump standarddeviation=yes;
+    log likelihood;
+    log <diagnostic_information>;
+    set autoclose=yes nowarn=yes;
+    quit;
+end;

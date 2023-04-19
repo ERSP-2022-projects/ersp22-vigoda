@@ -1,0 +1,31 @@
+#NEXUS
+[ID: 6450215227]
+[This file contains the trees that were found during the MCMC
+search, sorted by posterior probability. "p" indicates the
+posterior probability of the tree whereas "P" indicates the
+cumulative posterior probability.]
+
+begin trees;
+   translate
+    1 A,
+    2 B,
+    3 C,
+    4 D,
+    5 E,
+    6 F,
+    7 G,
+    8 H,
+    9 I,
+   10 J,
+   11 K,
+   12 L,
+   13 M,
+   14 N,
+   15 O,
+   16 P,
+   17 Q,
+   18 R,
+   19 S,
+   20 T;
+   tree tree_1 [p = 1.000, P = 1.000] = [&W 1.000000] ((12,9),((18,13),(((11,(15,8)),2),(19,((((16,(14,7)),((20,10),5)),4),(6,(17,3)))))),1);
+end;
