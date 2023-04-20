@@ -41,6 +41,23 @@ void Tree::copyTopology(Tree& tree) {
     // }
 }
 
+void Tree::setBranchLengths(vector<double> lengths) {
+    if (lengths.size() != 2 * species - 3) {
+        cerr << "# of branch lengths does not match # of edges" << endl;
+        return;
+    }
+    for (int i = 0; i < 2 * species - 3; i++) {
+        edges[i].branchLength = lengths[i];
+    }
+}
+
+void Tree::randomizeBranchLengths(double min, double max) {
+    uint64_t seed = init(orig + 3);
+    for (int i = 0; i < 2 * species - 3; i++) {
+        edges[i].branchLength = nextFloat(&seed) * (max - min) + min;
+    }
+}
+
 void Tree::dfsSequenceGen() {
     uint64_t seed = init(orig + 2);
     stack<int> s;
@@ -61,7 +78,7 @@ void Tree::dfsSequenceGen() {
                 // note id = ancestor, v = descendant
                 for (int i = 0; i < seqlen; i++) {
                     sequences[v][i] = sequences[id][i];
-                    if (nextFloat(&seed) < p_mutate) {
+                    if (nextFloat(&seed) < edges[i].branchLength) {
                         sequences[v][i] += roll_nucleotide(smm, &seed);
                         sequences[v][i] %= 4;
                     }
@@ -128,7 +145,7 @@ void Tree::recursiveNewick(string& newick, int id, bool* visited) {
 }
 
 void Tree::printEdges() {
-    for (int i = 0; i < 2 * species - 3; i++) {
-        cout << (edges[i].v1+1) << ", " << (edges[i].v2+1) << endl;
+    for (Edge e : edges) {
+        cout << "(" << e.v1 << ", " << e.v2 << "), " << e.branchLength << endl;
     }
 }

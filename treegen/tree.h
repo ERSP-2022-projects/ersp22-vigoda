@@ -14,7 +14,8 @@ struct Vertex {
 
 struct Edge {
     int v1, v2;
-    Edge(int v1 = -1, int v2 = -1) : v1(v1), v2(v2) {}
+    double branchLength;
+    Edge(int v1 = -1, int v2 = -1, double branchLength = 0.1) : v1(v1), v2(v2), branchLength(branchLength) {}
     int has(int id) {
         if (v1 == id) return v2;
         if (v2 == id) return v1;
@@ -26,7 +27,6 @@ class Tree {
     private:
         uint64_t orig;
         int species, seqlen;
-        double p_mutate;
         mutation_model smm;
         vector<vector<int> > sequences;
         vector<Vertex> vertices;
@@ -36,15 +36,18 @@ class Tree {
         void recursiveNewick(string& newick, int id, bool* visited);
 
     public:
-        Tree(uint64_t seed, const int species, const int seqlen, double p_mutate, mutation_model smm) : 
-            orig(seed), species(species), seqlen(seqlen), p_mutate(p_mutate), smm(smm),
-            vertices(2 * species - 2), edges(2 * species - 3) {
+        Tree(uint64_t seed, const int species, const int seqlen, double p_mutate = 0.1, mutation_model smm = jc69) : 
+            orig(seed), species(species), seqlen(seqlen), smm(smm),
+            vertices(2 * species - 2) {
                 sequences = vector<vector<int>>(2 * species - 2, vector<int>(seqlen));
+                edges = vector<Edge>(2 * species - 3, Edge(p_mutate));
                 makeVertices();
             }
         void generateRandomTopology();
         void generateTopology(vector<int> edgearr);
         void copyTopology(Tree& tree);
+        void setBranchLengths(vector<double> lengths);
+        void randomizeBranchLengths(double min, double max);
         void dfsSequenceGen();
         void mixSequences(vector<Tree> trees);
         void writeToNexus();
