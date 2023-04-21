@@ -10,7 +10,7 @@
 #include <random>
 #include <stdexcept>
 using namespace std;
-double NewickTree::TreeNode::randomBranchLength(double lowerBound = 1e-5, double upperBound = 5)
+double NewickTree::TreeNode::randomBranchLength(double lowerBound = 0.01, double upperBound = 1)
 {
     // generate random branch length from gamma distribution
     random_device rd;
