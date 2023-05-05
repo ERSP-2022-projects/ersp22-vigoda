@@ -9,14 +9,30 @@ void Tree::makeVertices() {
     }
 }
 
+void Tree::splitEdge(int e, int v) {
+    int in_node = species + v - 2;
+    int ext_edge = 2 * v - 3;
+    int in_edge = 2 * v - 2;
+    int moving_node = edges[e].v2;
+    edges[ext_edge] = Edge(v, in_node);
+    edges[in_edge] = Edge(in_node, moving_node);
+    edges[e].v2 = in_node;
+    vertices[v].edges[0] = ext_edge;
+    vertices[in_node].edges[0] = e;
+    vertices[in_node].edges[1] = in_edge;
+    vertices[in_node].edges[2] = ext_edge;
+    for (int i = 0; i < 3; i++)
+        if (vertices[moving_node].edges[i] == e) vertices[moving_node].edges[i] = in_edge;
+}
+
 void Tree::generateRandomTopology() {
     uint64_t seed = init(orig + 1);
     edges[0] = Edge(0, 1);
+    vertices[0].edges[0] = 0;
+    vertices[1].edges[0] = 0;
     for (int i = 2; i < species; i++) {
-        edges[2 * i - 3] = Edge(i, species+i-2);
-        int e = nextInt(&seed, 2 * i - 4);
-        edges[2 * i - 2] = Edge(species+i-2, edges[e].v2);
-        edges[e].v2 = species+i-2;
+        int e = nextInt(&seed, 2 * i - 4); // randomly select an edge to split
+        splitEdge(e, i);
     }
 }
 
@@ -35,6 +51,7 @@ void Tree::copyTopology(Tree& tree) {
         cerr << "# of leaves/edges does not match" << endl;
         return;
     }
+    this->vertices = tree.vertices;
     this->edges = tree.edges;
     // for (int i = 0; i < 2 * species - 3; i++) {
     //     edges[i] = Edge(tree.edges[i].v1, tree.edges[i].v2);
@@ -62,23 +79,23 @@ void Tree::dfsSequenceGen() {
     uint64_t seed = init(orig + 2);
     stack<int> s;
     bool visited[2 * species - 2];
-    for (int i = 0; i < 2 * species - 2; i++)
-        visited[i] = false;
+    for (int i = 0; i < 2 * species - 2; i++) visited[i] = false;
     s.push(0); // starting node doesn't matter
     for (int i = 0; i < seqlen; i++) sequences[0][i] = nextInt(&seed, 4); // randomize 1st node
     while (!s.empty()) {
         int id = s.top();
         visited[id] = true;
         s.pop();
-        for (int i = 0; i < 2 * species - 3; i++) {
-            int v = edges[i].has(id);
+        for (int e = 0; e < (vertices[id].isLeaf ? 1 : 3); e++) {
+            int edge = vertices[id].edges[e];
+            int v = edges[edge].has(id);
             if (v != -1 && !visited[v]) {
                 s.push(v);
                 // mutate the sequence
                 // note id = ancestor, v = descendant
                 for (int i = 0; i < seqlen; i++) {
                     sequences[v][i] = sequences[id][i];
-                    if (nextFloat(&seed) < edges[i].branchLength) {
+                    if (nextFloat(&seed) < edges[edge].branchLength) {
                         sequences[v][i] += roll_nucleotide(smm, &seed);
                         sequences[v][i] %= 4;
                     }
@@ -91,9 +108,8 @@ void Tree::dfsSequenceGen() {
 void Tree::mixSequences(vector<Tree> trees) {
     uint64_t seed = init(orig + 3);
     for (int c = 0; c < seqlen; c++) {
-        Tree use = trees[nextInt(&seed, trees.size())];
         for (int i = 0; i < 2 * species - 2; i++) {
-            sequences[i][c] = use.sequences[i][c];
+            sequences[i][c] = trees[nextInt(&seed, trees.size())].sequences[i][c];
         }
     }
 }
@@ -132,8 +148,8 @@ void Tree::recursiveNewick(string& newick, int id, bool* visited) {
         else {
             newick += "(";
             bool first = false;
-            for (int i = 0; i < 2 * species - 3; i++) {
-                int v = edges[i].has(id);
+            for (int i = 0; i < (vertices[id].isLeaf ? 1 : 3); i++) {
+            int v = edges[vertices[id].edges[i]].has(id);
                 if (v != -1 && !visited[v]) {
                     if (first) newick += ",";
                     else first = true;
@@ -144,8 +160,15 @@ void Tree::recursiveNewick(string& newick, int id, bool* visited) {
         }
 }
 
-void Tree::printEdges() {
-    for (Edge e : edges) {
-        cout << "(" << e.v1 << ", " << e.v2 << "), " << e.branchLength << endl;
+void Tree::printVE() {
+    cout << "vertices" << endl;
+    for (int i = 0; i < 2 * species - 2; i++) {
+        Vertex v = vertices[i];
+        cout << i << ": (" << v.edges[0] << ", " << v.edges[1] << ", " << v.edges[2] << ", " << ")" << endl;
+    }
+    cout << "edges" << endl;
+    for (int i = 0; i < 2 * species - 3; i++) {
+        Edge e = edges[i];
+        cout << i << ": (" << e.v1 << ", " << e.v2 << "), " << e.branchLength << endl;
     }
 }

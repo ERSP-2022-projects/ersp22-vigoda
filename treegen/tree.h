@@ -8,8 +8,9 @@ using namespace std;
 struct Vertex {
     bool isLeaf;
     string name;
+    int edges[3] = {-1,-1,-1};
     Vertex() : isLeaf(false), name("-") {}
-    Vertex(string name) : isLeaf(true), name(name){};
+    Vertex(string name) : isLeaf(true), name(name) {};
 };
 
 struct Edge {
@@ -33,6 +34,7 @@ class Tree {
         vector<Edge> edges;
         
         void makeVertices();
+        void splitEdge(int e, int v);
         void recursiveNewick(string& newick, int id, bool* visited);
 
     public:
@@ -52,7 +54,7 @@ class Tree {
         void mixSequences(vector<Tree> trees);
         void writeToNexus();
         string toNewick();
-        void printEdges();
+        void printVE();
 };
 
 #endif
